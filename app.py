@@ -1,28 +1,33 @@
 #!/usr/local/bin/python
 
 # Imports
-import logging
 import os
 import signal
 import sys
 import time
+
 import azias
 import azias.config as config
 import azias.youtube as yt
 import azias.youtube.workers as yt_workers
+import azias.exit_codes as exit_codes
+
 
 # Constants
 CONFIG_PATH = "./config.json"
 
+
 # Globals
 is_end_signal_raised = False
 
+
 # Code
 logger = azias.get_logger("main", config.current_logger_level_generic)
-logger.info("#########################################")
-logger.info("# Azias' YouTube Auto-Downloader v0.1.0 #")
-logger.info("#########################################")
+logger.info("##################################")
+logger.info("# Youtube-Auto-Archiver - v0.2.0 #")
+logger.info("##################################")
 
+# Changing CWD to app.py's location (Mainly done for Docker)
 logger.info("Correcting CWD...")
 try:
     logger.debug("Going from '{}' to '{}'".format(os.getcwd(), os.path.dirname(os.path.realpath(__file__))))
@@ -30,13 +35,24 @@ try:
 except Exception as err:
     logger.error("Failed to change the current working directory !")
     logger.error(err)
-    sys.exit(1001)
+    sys.exit(exit_codes.ERROR_CWD_FAILURE)
 
+# Loading the config file (Soft link used in Docker)
 logger.info("Loading config file...")
-config.load(CONFIG_PATH)
+try:
+    config.load(CONFIG_PATH)
+except OSError as err:
+    logger.error("Failed to load the config file !")
+    logger.error(err)
+    sys.exit(exit_codes.ERROR_CONFIG_OS_ERROR)
+except Exception as err:
+    logger.error("Failed to parse the config file !")
+    logger.error(err)
+    sys.exit(exit_codes.ERROR_CONFIG_JSON_ERROR)
 logger.setLevel(config.current_logger_level_generic)
 logger.debug("Config loaded: {}".format(config.json.dumps(config.config)))
 
+# Parsing the config file
 logger.info("Parsing the YouTube channels...")
 for channel in config.config["youtube"]["channels"]:
     logger.debug("Registering '{}'".format(channel["name"]))
@@ -62,7 +78,7 @@ try:
 except OSError as err:
     logger.error("Failed to create some of the required folders !")
     logger.error(err)
-    sys.exit(1003)
+    sys.exit(exit_codes.ERROR_MKDIR_FAILURE)
 
 
 def sigint_term_handler(sig, frame):
@@ -91,3 +107,4 @@ while True:
         break
 
 logger.info("Goodbye !")
+sys.exit(exit_codes.NO_ERROR)

@@ -45,7 +45,7 @@ class Channel:
         self.check_upload_ongoing = False
         self.logger = azias.get_logger("yt-"+internal_id, config.current_logger_level_youtube)
         
-    def get_output_path(self):
+    def get_output_path(self) -> str:
         return os.path.join(config.get_youtube_basedir(), self.output_subdir)
     
     def should_run_worker_live(self) -> bool:

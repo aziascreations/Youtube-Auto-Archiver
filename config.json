@@ -1,12 +1,11 @@
 {
   "application": {
-    "base_output_dir_tmp": "/data",
     "base_output_dir": "./data"
   },
   "youtube": {
     "output_subdir": "./youtube",
     "general_prefix": "yt-",
-    "delay_ms_before_metadata_download": 10000,
+    "delay_ms_before_metadata_download": 15000,
     "channels": [
       {
         "internal_id": "rim",
