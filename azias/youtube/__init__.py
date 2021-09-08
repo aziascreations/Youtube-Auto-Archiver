@@ -27,10 +27,12 @@ class Channel:
     check_upload_last_timestamp: float
     check_upload_ongoing: bool
     
+    quality_live: str
+    
     logger: logging.Logger
     
     def __init__(self, internal_id, channel_id, name, output_subdir, check_live, check_upload, interval_ms_live,
-                 interval_ms_upload):
+                 interval_ms_upload, quality_live):
         self.internal_id = internal_id
         self.channel_id = channel_id
         self.name = name
@@ -43,6 +45,7 @@ class Channel:
         self.check_live_ongoing = False
         self.check_upload_last_timestamp = time.time()
         self.check_upload_ongoing = False
+        self.quality_live = quality_live
         self.logger = azias.get_logger("yt-"+internal_id, config.current_logger_level_youtube)
         
     def get_output_path(self) -> str:

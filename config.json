@@ -5,7 +5,7 @@
   "youtube": {
     "output_subdir": "./youtube",
     "general_prefix": "yt-",
-    "delay_ms_before_metadata_download": 15000,
+    "delay_ms_before_metadata_download": 30000,
     "channels": [
       {
         "internal_id": "rim",
@@ -15,7 +15,8 @@
         "check_live": true,
         "check_upload": false,
         "interval_ms_live": 90000,
-        "interval_ms_upload": -1
+        "interval_ms_upload": -1,
+        "quality_live": "best"
       },
       {
         "internal_id": "ppk",
@@ -25,7 +26,8 @@
         "check_live": true,
         "check_upload": false,
         "interval_ms_live": 120000,
-        "interval_ms_upload": -1
+        "interval_ms_upload": -1,
+        "quality_live": "best"
       }
     ]
   }

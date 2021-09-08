@@ -35,9 +35,10 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
         str(int(time.time()))
     )
     
-    command: str = "streamlink --hls-live-restart -o {} https://www.youtube.com/c/{}/live best".format(
+    command: str = "streamlink --hls-live-restart -o {} https://www.youtube.com/c/{}/live {}".format(
         os.path.normpath(os.path.join(worker.channel.get_output_path(), file_base_name+".mp4")),
-        worker.channel.channel_id
+        worker.channel.channel_id,
+        worker.channel.quality_live
     )
     worker.logger_thread.debug("Command: "+command)
     
