@@ -2,7 +2,17 @@
 
 A simple python application that automatically checks if a Youtuber is streaming, and downloads said streams.
 
-Is it still under development, the readme and code will be improved soon, and a Dockerfile will be made public.
+Is it still under development, and a Dockerfile will be made public soon.
+
+## Warning
+
+Due to the way some commands are executed, it is possible to have a
+[command injection](https://owasp.org/www-community/attacks/Command_Injection)
+if you mess up or leave the config file editable by everyone.<br>
+This might be fixed in the future, but don't count on it as this project is a personal project.
+
+The code might not be pretty and enjoyable to look at, but it works, is reliable and decently structured,
+so I'm fine with it.
 
 ## Features
 
