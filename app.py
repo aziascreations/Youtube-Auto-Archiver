@@ -24,7 +24,7 @@ is_end_signal_raised = False
 # Code
 logger = azias.get_logger("main", config.current_logger_level_generic)
 logger.info("##################################")
-logger.info("# Youtube-Auto-Archiver - v0.2.0 #")
+logger.info("# Youtube-Auto-Archiver - v0.3.0 #")
 logger.info("##################################")
 
 # Changing CWD to app.py's location (Mainly done for Docker)

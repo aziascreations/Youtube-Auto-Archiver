@@ -1,1 +1,2 @@
 streamlink
+yt-dlp
