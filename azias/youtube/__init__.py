@@ -28,11 +28,23 @@ class Channel:
     check_upload_ongoing: bool
     
     quality_live: str
+    quality_upload: str
+
+    backlog_days_upload: int
+
+    break_on_existing: bool
+    break_on_reject: bool
+    write_upload_thumbnail: bool
+
+    yt_dlp_extra_args: str
+    
+    allow_upload_while_live: bool
     
     logger: logging.Logger
     
     def __init__(self, internal_id, channel_id, name, output_subdir, check_live, check_upload, interval_ms_live,
-                 interval_ms_upload, quality_live):
+                 interval_ms_upload, quality_live, quality_upload, backlog_days_upload, break_on_existing,
+                 break_on_reject, write_upload_thumbnail, yt_dlp_extra_args, allow_upload_while_live):
         self.internal_id = internal_id
         self.channel_id = channel_id
         self.name = name
@@ -46,6 +58,13 @@ class Channel:
         self.check_upload_last_timestamp = time.time()
         self.check_upload_ongoing = False
         self.quality_live = quality_live
+        self.quality_upload = quality_upload
+        self.backlog_days_upload = backlog_days_upload
+        self.break_on_existing = break_on_existing
+        self.break_on_reject = break_on_reject
+        self.write_upload_thumbnail = write_upload_thumbnail
+        self.yt_dlp_extra_args = yt_dlp_extra_args
+        self.allow_upload_while_live = allow_upload_while_live
         self.logger = azias.get_logger("yt-"+internal_id, config.current_logger_level_youtube)
         
     def get_output_path(self) -> str:
@@ -77,6 +96,35 @@ class Channel:
         self.logger.debug("No worker run: not enough time passed ({:.1f}s vs {:.1f}s)".format(
             time.time() - self.check_live_last_timestamp,
             self.interval_ms_live / 1000
+        ))
+        return False
+    
+    def should_run_worker_upload(self) -> bool:
+        if (not self.check_upload) or self.interval_ms_upload == -1:
+            self.logger.debug("No worker run: disabled")
+            return False
+    
+        if self.worker_upload is not None:
+            if self.worker_upload.is_running():
+                self.logger.debug("No worker run: ongoing")
+                self.check_upload_ongoing = True
+                return False
+    
+        if self.check_upload_ongoing:
+            # The thread is no longer running but was during the last check.
+            self.check_upload_ongoing = False
+            self.check_upload_last_timestamp = time.time()
+            self.logger.debug("No worker run: was ongoing")
+            return False
+    
+        if time.time() > self.check_upload_last_timestamp + (self.interval_ms_upload / 1000):
+            self.check_upload_last_timestamp = time.time()
+            self.logger.debug("Worker run")
+            return True
+    
+        self.logger.debug("No worker run: not enough time passed ({:.1f}s vs {:.1f}s)".format(
+            time.time() - self.check_upload_last_timestamp,
+            self.interval_ms_upload / 1000
         ))
         return False
 

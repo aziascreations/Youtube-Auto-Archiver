@@ -169,6 +169,44 @@ and description.<br>Can be disabled if set to "-1".</td>
         <td>String</td>
         <td>Quality setting used in streamlink when downloading a live.</td>
     </tr>
+    <tr>
+        <td>quality_upload</td>
+        <td>String</td>
+        <td>Quality setting used in yt-dlp with the `-f` option.</td>
+    </tr>
+    <tr>
+        <td>backlog_days_upload</td>
+        <td>Integer</td>
+        <td>
+            Number of days to look back to for uploads<br>
+            Added as-is in the `--dateafter now-Xdays` option where `X` is.
+        </td>
+    </tr>
+    <tr>
+        <td>break_on_existing</td>
+        <td>Boolean</td>
+        <td>Indicates if yt-dlp should stop downloading uploads when encountering an existing completed download.</td>
+    </tr>
+    <tr>
+        <td>break_on_reject</td>
+        <td>Boolean</td>
+        <td>Indicates if yt-dlp should stop downloading uploads when encountering a filtered video.</td>
+    </tr>
+    <tr>
+        <td>write_upload_thumbnail</td>
+        <td>Boolean</td>
+        <td>Indicates if yt-dlp should use the ´--write-thumbnail´ flag.</td>
+    </tr>
+    <tr>
+        <td>yt_dlp_extra_args</td>
+        <td>String</td>
+        <td>Extra args added as-is to the yt-dlp command right before the channel URL.</td>
+    </tr>
+    <tr>
+        <td>allow_upload_while_live</td>
+        <td>Boolean</td>
+        <td>Indicates whether yt-dlp can download videos while a "live" worker is running for the given channel.</td>
+    </tr>
 </table>
 
 ## Credits

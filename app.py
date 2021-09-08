@@ -12,19 +12,16 @@ import azias.youtube as yt
 import azias.youtube.workers as yt_workers
 import azias.exit_codes as exit_codes
 
-
 # Constants
 CONFIG_PATH = "./config.json"
-
 
 # Globals
 is_end_signal_raised = False
 
-
 # Code
 logger = azias.get_logger("main", config.current_logger_level_generic)
 logger.info("##################################")
-logger.info("# Youtube-Auto-Archiver - v0.3.0 #")
+logger.info("# Youtube-Auto-Archiver - v0.4.0 #")
 logger.info("##################################")
 
 # Changing CWD to app.py's location (Mainly done for Docker)
@@ -66,7 +63,7 @@ for channel in yt.channels:
         pass
     if channel.check_upload and channel.interval_ms_upload != -1:
         logger.debug("Adding upload worker for '{}'".format(channel.name))
-        # channel.worker_upload =
+        channel.worker_upload = yt_workers.create_upload_worker(channel)
         pass
 
 logger.info("Preparing the output folder structure...")
@@ -95,10 +92,24 @@ signal.signal(signal.SIGTERM, sigint_term_handler)
 logger.info("Entering main loop...")
 while True:
     for channel in yt.channels:
+        # Checking if a "live" worker can and should run
         if channel.check_live and channel.interval_ms_live != -1:
             if channel.should_run_worker_live() and channel.worker_live is not None:
                 logger.debug("Running worker => {}".format(channel.worker_live.name))
                 channel.worker_live.run()
+        
+        # Checking if a "upload" worker can and should run
+        if channel.check_upload and channel.interval_ms_live != -1:
+            if channel.should_run_worker_upload() and channel.worker_upload is not None:
+                # Checking if a live is running before running the worker
+                if channel.allow_upload_while_live:
+                    logger.debug("Running worker [c1] => {}".format(channel.worker_upload.name))
+                    channel.worker_upload.run()
+                elif not channel.worker_live.is_running():
+                    logger.debug("Running worker [c2] => {}".format(channel.worker_upload.name))
+                    channel.worker_upload.run()
+                else:
+                    logger.info("Not running '{}' due to an ongoing live !".format(channel.worker_upload.name))
     
     time.sleep(1)
     

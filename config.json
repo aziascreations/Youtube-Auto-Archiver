@@ -13,21 +13,35 @@
         "name": "Rogue, Internet Man",
         "output_subdir": "./rogue_internet_man",
         "check_live": true,
-        "check_upload": false,
+        "check_upload": true,
         "interval_ms_live": 90000,
-        "interval_ms_upload": -1,
-        "quality_live": "best"
+        "interval_ms_upload": 3700000,
+        "quality_live": "best",
+        "quality_upload": "bestvideo[ext!=webm]??+bestaudio[ext!=webm]??/best[ext!=webm]",
+        "backlog_days_upload": 7,
+        "break_on_existing": false,
+        "break_on_reject": true,
+        "write_upload_thumbnail": true,
+        "yt_dlp_extra_args": "--write-description --write-info-json --merge-output-format mp4 ",
+        "allow_upload_while_live": false
       },
       {
         "internal_id": "ppk",
         "channel_id": "propainkey",
         "name": "propainkey",
         "output_subdir": "./propainkey",
-        "check_live": true,
+        "check_live": false,
         "check_upload": false,
         "interval_ms_live": 120000,
-        "interval_ms_upload": -1,
-        "quality_live": "best"
+        "interval_ms_upload": 5100000,
+        "quality_live": "best",
+        "quality_upload": "bestvideo[ext!=webm]??+bestaudio[ext!=webm]??/best[ext!=webm]",
+        "backlog_days_upload": 3,
+        "break_on_existing": false,
+        "break_on_reject": true,
+        "write_upload_thumbnail": true,
+        "yt_dlp_extra_args": "--write-description --write-info-json --merge-output-format mp4 ",
+        "allow_upload_while_live": false
       }
     ]
   }

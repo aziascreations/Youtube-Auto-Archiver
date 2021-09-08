@@ -22,6 +22,64 @@ class __WorkerLive(YouTubeWorker):
         super().__init__(name, entry_point, channel)
 
 
+class __WorkerUpload(YouTubeWorker):
+    def __init__(self, name, entry_point, channel):
+        super().__init__(name, entry_point, channel)
+
+
+def __thread_yt_upload(worker: YouTubeWorker, **args):
+    if worker.logger_thread is None:
+        worker.logger_thread = azias.get_logger(
+            "yt-upload-" + worker.channel.internal_id,
+            config.current_logger_level_thread)
+    
+    command: str = "yt-dlp --no-warnings --newline --no-progress --dateafter now-{}days {}{}{}-f {} {}https://www.youtube.com/c/{}".format(
+        ("1" if worker.channel.backlog_days_upload < 1 else str(worker.channel.backlog_days_upload)),
+        ("" if not worker.channel.break_on_existing else "--break-on-existing "),
+        ("" if not worker.channel.break_on_reject else "--break-on-reject "),
+        ("" if not worker.channel.write_upload_thumbnail else "--write-thumbnail "),
+        worker.channel.quality_upload,
+        worker.channel.yt_dlp_extra_args + ("" if worker.channel.yt_dlp_extra_args.endswith(" ") else " "),
+        worker.channel.channel_id
+    )
+    worker.logger_thread.debug("Command: " + command)
+    
+    process: subprocess.Popen = subprocess.Popen(
+        command,
+        shell=True,
+        stdout=subprocess.PIPE,
+        cwd=os.path.normpath(worker.channel.get_output_path())
+    )
+    
+    #last_stdout_timestamp: float = time.time()
+    while process.poll() is None:
+        # Does not work for some reason
+        """if time.time() > last_stdout_timestamp + 2:
+            lines = process.stdout.readlines()
+            process.stdout.flush()
+            for line in lines:
+                worker.logger_thread.debug(line)
+            last_stdout_timestamp = time.time()"""
+        
+        # Prevents CPU hogging
+        time.sleep(1)
+    
+    # Just in case...
+    process.wait()
+    
+    worker.last_return_code = process.returncode
+
+    lines = process.stdout.readlines()
+    process.stdout.flush()
+    for line in lines:
+        worker.logger_thread.debug(line)
+    
+    # Debugging time sink
+    # time.sleep((worker.channel.interval_ms_live / 1000) * 1.5)
+    
+    worker.logger_thread.debug("Closing thread ! => {}".format(worker.last_return_code))
+
+
 def __thread_yt_live(worker: YouTubeWorker, **args):
     # Preparing the logger if needed
     if worker.logger_thread is None:
@@ -53,7 +111,7 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
             if time.time() > process_start_time + metadata_delay:
                 worker.logger_thread.debug("Attempting to download metadata...")
                 
-                command_yt_dlp = "yt-dlp --write-thumbnail --write-description --skip-download -o \"{}\" " \
+                command_yt_dlp = "yt-dlp --write-thumbnail --write-description --write-info-json --skip-download -o \"{}\" " \
                                  "https://www.youtube.com/c/{}/live".format(
                     os.path.normpath(os.path.join(worker.channel.get_output_path(), file_base_name)),
                     worker.channel.channel_id)
@@ -86,3 +144,7 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
 
 def create_live_worker(channel: Channel) -> YouTubeWorker:
     return __WorkerLive("worker-yt-live-" + channel.internal_id, __thread_yt_live, channel)
+
+
+def create_upload_worker(channel: Channel) -> YouTubeWorker:
+    return __WorkerLive("worker-yt-upload-" + channel.internal_id, __thread_yt_upload, channel)
