@@ -73,7 +73,7 @@ The config is stored in [config.json](config.json) and has to be in the same fol
         <td>Contains the configs that are use globally by the application.</td>
     </tr>
     <tr>
-        <td>application</td>
+        <td>youtube</td>
         <td>Youtube Object</td>
         <td>Contains the configs for the YouTube related part of the application.</td>
     </tr>
