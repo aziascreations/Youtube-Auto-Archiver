@@ -2,7 +2,10 @@
 
 A simple python application that automatically checks if a Youtuber is streaming, and downloads said streams.
 
-Is it still under development, and a Dockerfile will be made public soon.
+The application will be improved as I have time to do so, or if you raise an issue an I have time to look into it.
+
+A Dockerized version of the app is also available in my "<i>[Docker - Youtube Auto Archiver](https://github.com/aziascreations/Docker-Youtube-Auto-Archiver)</i>" repository.<br>
+It is still missing a few features such as configurable UIG and GID however.
 
 ## Warning
 
@@ -11,7 +14,7 @@ Due to the way some commands are executed, it is possible to have a
 if you mess up or leave the config file editable by everyone.<br>
 This might be fixed in the future, but don't count on it as this project is a personal project.
 
-The code might not be pretty and enjoyable to look at, but it works, is reliable and decently structured,
+The code might also not be pretty and enjoyable to look at, but it works, is reliable and decently structured,
 so I'm fine with it.
 
 ## Features
@@ -19,13 +22,14 @@ so I'm fine with it.
 * General
   * Can run on Windows and Linux (*x64 or armv8*)
 * YouTube
-  * Automatic livestream download through "*youtube.com/c/.../live*"
+  * Automatic livestream download through <code>https://youtube.com/c/.../live</code>
   * Automatic livestream thumbnail and description download
   * Configurable delays per channel
   * Toggleable actions
 * Planned
   * Logging levels in the config file
   * Cookies support for *yt-dlp* and maybe *streamlink*
+  * Support for incomplete config files with default values.
 
 ## Installation
 
@@ -56,7 +60,28 @@ The config is stored in [config.json](config.json) and has to be in the same fol
 
 <table>
     <tr>
-        <td colspan="3"><b><u>{ application {</u></b></td>
+        <td colspan="3"><b><u>Root => {</u></b></td>
+    </tr>
+    <tr>
+        <td><b>Field</b></td>
+        <td><b>Type</b></td>
+        <td><b>Remark</b></td>
+    </tr>
+    <tr>
+        <td>application</td>
+        <td>Application Object</td>
+        <td>Contains the configs that are use globally by the application.</td>
+    </tr>
+    <tr>
+        <td>application</td>
+        <td>Youtube Object</td>
+        <td>Contains the configs for the YouTube related part of the application.</td>
+    </tr>
+</table>
+
+<table>
+    <tr>
+        <td colspan="3"><b><u>Application => { application {</u></b></td>
     </tr>
     <tr>
         <td><b>Field</b></td>
@@ -72,7 +97,7 @@ The config is stored in [config.json](config.json) and has to be in the same fol
 
 <table>
     <tr>
-        <td colspan="3"><b><u>{ youtube {</u></b></td>
+        <td colspan="3"><b><u>Youtube => { youtube {</u></b></td>
     </tr>
     <tr>
         <td><b>Field</b></td>
@@ -84,7 +109,7 @@ The config is stored in [config.json](config.json) and has to be in the same fol
         <td>String</td>
         <td>
             Directory in which all YouTube related downloads are stored.<br>
-            Appended to "<i>application.base_output_dir</i>".
+            Appended to <code>application.base_output_dir</code>.
         </td>
     </tr>
     <tr>
@@ -96,7 +121,7 @@ The config is stored in [config.json](config.json) and has to be in the same fol
         <td>delay_ms_before_metadata_download</td>
         <td>Integer</td>
         <td>Delay in ms between the start of a live downloader thread and the moment it attempts to download its thumbnail
-and description.<br>Can be disabled if set to "-1".</td>
+and description.<br>Can be disabled if set to <code>-1</code>.</td>
     </tr>
     <tr>
         <td>channels</td>
@@ -134,7 +159,7 @@ and description.<br>Can be disabled if set to "-1".</td>
         <td>String</td>
         <td>
             Directory in which all the files for this channel are downloaded into.<br>
-            Appended to "<i>application.base_output_dir</i>" and "<i>youtube.output_subdir</i>".
+            Appended to <code>application.base_output_dir</code> and <code>youtube.output_subdir</code>.
         </td>
     </tr>
     <tr>
@@ -145,15 +170,14 @@ and description.<br>Can be disabled if set to "-1".</td>
     <tr>
         <td>check_upload</td>
         <td>Boolean</td>
-        <td>Toggles the video downloading worker and threads. (NOT IMPLEMENTED)</td>
+        <td>Toggles the video downloading worker and threads.</td>
     </tr>
     <tr>
         <td>interval_ms_live</td>
         <td>Integer</td>
         <td>
             Delay in ms between each verification of the channel to see if it is livestreaming.<br>
-            Will disable the functionality if set to "<i>-1</i>".<br>
-            (NOT IMPLEMENTED)
+            Will disable the functionality if set to <code>-1</code>.
         </td>
     </tr>
     <tr>
@@ -161,7 +185,7 @@ and description.<br>Can be disabled if set to "-1".</td>
         <td>Integer</td>
         <td>
             Delay in ms between each verification of the channel to see if it is livestreaming.<br>
-            Will disable the functionality if set to "<i>-1</i>".
+            Will disable the functionality if set to <code>-1</code>.
         </td>
     </tr>
     <tr>
@@ -172,14 +196,14 @@ and description.<br>Can be disabled if set to "-1".</td>
     <tr>
         <td>quality_upload</td>
         <td>String</td>
-        <td>Quality setting used in yt-dlp with the `-f` option.</td>
+        <td>Quality setting used in yt-dlp with the <code>-f</code> option.</td>
     </tr>
     <tr>
         <td>backlog_days_upload</td>
         <td>Integer</td>
         <td>
             Number of days to look back to for uploads<br>
-            Added as-is in the `--dateafter now-Xdays` option where `X` is.
+            Added as-is in the <code>--dateafter now-Xdays</code> option where <code>X</code> is the number of days given here.
         </td>
     </tr>
     <tr>
@@ -195,7 +219,7 @@ and description.<br>Can be disabled if set to "-1".</td>
     <tr>
         <td>write_upload_thumbnail</td>
         <td>Boolean</td>
-        <td>Indicates if yt-dlp should use the ´--write-thumbnail´ flag.</td>
+        <td>Indicates if yt-dlp should use the <code>--write-thumbnail</code> flag.</td>
     </tr>
     <tr>
         <td>yt_dlp_extra_args</td>
@@ -205,7 +229,7 @@ and description.<br>Can be disabled if set to "-1".</td>
     <tr>
         <td>allow_upload_while_live</td>
         <td>Boolean</td>
-        <td>Indicates whether yt-dlp can download videos while a "live" worker is running for the given channel.</td>
+        <td>Indicates whether yt-dlp can download videos while a <i>live worker</i> is running for the given channel.</td>
     </tr>
 </table>
 
