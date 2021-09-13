@@ -1,30 +1,38 @@
 #!/usr/local/bin/python
-
-# Imports
 import os
 import signal
 import sys
 import time
+from typing import Union
 
-import azias
-import azias.config as config
-import azias.youtube as yt
-import azias.youtube.workers as yt_workers
-import azias.exit_codes as exit_codes
-
-# Constants
-CONFIG_PATH = "./config.json"
+import yaa
+import yaa.config as config
+import yaa.exit_codes as exit_codes
+from yaa.version import __version__ as version
+import yaa.youtube as yt
+import yaa.youtube.workers as yt_workers
 
 # Globals
 is_end_signal_raised = False
+channel: Union[dict, yt.Channel]
 
 # Code
-logger = azias.get_logger("main", config.current_logger_level_generic)
-logger.info("##################################")
-logger.info("# Youtube-Auto-Archiver - v0.4.0 #")
-logger.info("##################################")
+logger = yaa.get_logger("main", config.DEFAULT_LOGGER_LEVEL_APPLICATION)
+logger.info("#############################{}".format("#"*len(version)))
+logger.info("# Youtube-Auto-Archiver - v{} #".format(version))
+logger.info("#############################{}".format("#"*len(version)))
 
-# Changing CWD to app.py's location (Mainly done for Docker)
+# Check to see if the application is running as 'root'.
+if hasattr(os, "getuid"):
+    if os.getuid() == 0:
+        if config.ALLOW_ROOT:
+            logger.warning("This application is running as 'root',"
+                           " you should change the UID and GUID for safety reason !")
+        else:
+            logger.error("The application is running as 'root' ! (UID==0)")
+            sys.exit(exit_codes.ERROR_RUNNING_AS_ROOT)
+
+# Changing CWD to app.py's location. (Mainly done for Docker since I couldn't be bothered to write a bash script for it)
 logger.info("Correcting CWD...")
 try:
     logger.debug("Going from '{}' to '{}'".format(os.getcwd(), os.path.dirname(os.path.realpath(__file__))))
@@ -37,7 +45,7 @@ except Exception as err:
 # Loading the config file (Soft link used in Docker)
 logger.info("Loading config file...")
 try:
-    config.load(CONFIG_PATH)
+    config.load()
 except OSError as err:
     logger.error("Failed to load the config file !")
     logger.error(err)
@@ -46,16 +54,18 @@ except Exception as err:
     logger.error("Failed to parse the config file !")
     logger.error(err)
     sys.exit(exit_codes.ERROR_CONFIG_JSON_ERROR)
-logger.setLevel(config.current_logger_level_generic)
+logger.setLevel(config.get_config_value(10, ["application", "logging_level_main"]))
 logger.debug("Config loaded: {}".format(config.json.dumps(config.config)))
 
 # Parsing the config file
 logger.info("Parsing the YouTube channels...")
-for channel in config.config["youtube"]["channels"]:
+for channel in config.get_config_value([], ["youtube", "channels"]):
+    channel["name"] = (channel["name"] if "name" in channel else channel["internal_id"])
     logger.debug("Registering '{}'".format(channel["name"]))
     yt.channels.append(yt.Channel(**channel))
 
-logger.info("Preparing the YouTube Workers...")
+logger.info("Preparing the YouTube Workers for {} channel{}...".format(
+    len(yt.channels), ("s" if len(yt.channels) > 1 else "")))
 for channel in yt.channels:
     if channel.check_live and channel.interval_ms_live != -1:
         logger.debug("Adding live worker for '{}'".format(channel.name))
@@ -68,7 +78,7 @@ for channel in yt.channels:
 
 logger.info("Preparing the output folder structure...")
 try:
-    os.makedirs(config.get_basedir(), exist_ok=True)
+    os.makedirs(config.get_root_data_dir(), exist_ok=True)
     os.makedirs(config.get_youtube_basedir(), exist_ok=True)
     for yt_channel in yt.channels:
         os.makedirs(yt_channel.get_output_path(), exist_ok=True)
@@ -79,7 +89,7 @@ except OSError as err:
 
 
 def sigint_term_handler(sig, frame):
-    logger.info('SIGINT or SIGTREM received !')
+    logger.info('SIGINT or SIGTERM received !')
     logger.debug('Setting the global kill-switch and waiting for main loop !')
     global is_end_signal_raised
     is_end_signal_raised = True

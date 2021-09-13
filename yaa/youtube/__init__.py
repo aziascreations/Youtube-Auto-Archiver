@@ -2,53 +2,56 @@ import logging
 import os
 import time
 
-import azias
-import azias.config as config
-from azias.worker import Worker
+import yaa
+import yaa.config as config
+from yaa.worker import Worker
 
 
 class Channel:
     internal_id: str
     channel_id: str
     name: str
+    
     output_subdir: str
+    
     check_live: bool
     check_upload: bool
+    
     interval_ms_live: int
     interval_ms_upload: int
     
     worker_live: Worker
     worker_upload: Worker
-    # Not implemented yet
-    # worker_ids: Worker
-
-    check_live_last_timestamp: float
-    check_live_ongoing: bool
-    check_upload_last_timestamp: float
-    check_upload_ongoing: bool
     
     quality_live: str
     quality_upload: str
-
+    
     backlog_days_upload: int
-
+    
     break_on_existing: bool
     break_on_reject: bool
-    write_upload_thumbnail: bool
-
+    
     yt_dlp_extra_args: str
     
     allow_upload_while_live: bool
     
     logger: logging.Logger
     
-    def __init__(self, internal_id, channel_id, name, output_subdir, check_live, check_upload, interval_ms_live,
-                 interval_ms_upload, quality_live, quality_upload, backlog_days_upload, break_on_existing,
-                 break_on_reject, write_upload_thumbnail, yt_dlp_extra_args, allow_upload_while_live):
+    check_live_last_timestamp: float
+    check_live_ongoing: bool
+    check_upload_last_timestamp: float
+    check_upload_ongoing: bool
+    
+    def __init__(self, internal_id, channel_id, name=None, output_subdir=None, check_live=False, check_upload=False,
+                 interval_ms_live=-1, interval_ms_upload=-1, quality_live="best", quality_upload="best",
+                 backlog_days_upload=7, break_on_existing=True, break_on_reject=True, yt_dlp_extra_args="",
+                 allow_upload_while_live=True, **kwargs):
         self.internal_id = internal_id
         self.channel_id = channel_id
-        self.name = name
-        self.output_subdir = output_subdir
+        
+        self.name = (name if name is not None else internal_id)
+        self.output_subdir = (name if name is not None else output_subdir)
+        
         self.check_live = check_live
         self.check_upload = check_upload
         self.interval_ms_live = interval_ms_live
@@ -62,11 +65,21 @@ class Channel:
         self.backlog_days_upload = backlog_days_upload
         self.break_on_existing = break_on_existing
         self.break_on_reject = break_on_reject
-        self.write_upload_thumbnail = write_upload_thumbnail
         self.yt_dlp_extra_args = yt_dlp_extra_args
         self.allow_upload_while_live = allow_upload_while_live
-        self.logger = azias.get_logger("yt-"+internal_id, config.current_logger_level_youtube)
         
+        self.logger = yaa.get_logger(
+            "yt-" + internal_id,
+            config.get_config_value(
+                config.DEFAULT_LOGGER_LEVEL_APPLICATION,
+                ["application", "logging_level_main"]
+            )
+        )
+        
+        for key, value in kwargs.items():
+            self.logger.warning("Unhandled keyword parameter used when creating a channel: {} => {}".format(
+                key, value))
+    
     def get_output_path(self) -> str:
         return os.path.join(config.get_youtube_basedir(), self.output_subdir)
     
