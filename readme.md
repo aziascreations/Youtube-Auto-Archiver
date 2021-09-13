@@ -21,7 +21,7 @@ The application isn't designed to be used by another one as a module.
 ## Features
 * General
   * Can run on Windows and Linux (*Tested on x64 and ARMv8*)
-  * Relatively high level of configurability. (More is incoming)
+  * Relatively high level of configurability. (*More is incoming*)
 * YouTube
   * Automatic livestream download through <code>https://youtube.com/c/.../live</code>
   * Automatic livestream thumbnail and description download.
@@ -141,7 +141,7 @@ If said variable does not have a default value, the program will exit and print 
         <td>String</td>
         <td>
             Directory in which all YouTube related downloads are stored.<br>
-            Appended to <code>application.base_output_dir</code>.
+            Appended to <code>application.root_output_dir</code>.
         </td>
         <td><code>./youtube</code></td>
     </tr>
@@ -218,14 +218,14 @@ and description.<br>Can be disabled if set to <code>-1</code>.</td>
         <td>name</td>
         <td>String</td>
         <td>Friendly name used in logging only.</td>
-        <td><i>{internal_id}</i></td>
+        <td><code>{internal_id}</code></td>
     </tr>
     <tr>
         <td>output_subdir</td>
         <td>String</td>
         <td>
             Directory in which all the files for this channel are downloaded into.<br>
-            Appended to <code>application.base_output_dir</code> and <code>youtube.output_subdir</code>.
+            Appended to <code>application.root_output_dir</code> and <code>youtube.output_subdir</code>.
         </td>
         <td><code>./{internal_id}</code></td>
     </tr>

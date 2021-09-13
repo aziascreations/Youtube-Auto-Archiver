@@ -50,7 +50,7 @@ class Channel:
         self.channel_id = channel_id
         
         self.name = (name if name is not None else internal_id)
-        self.output_subdir = (name if name is not None else output_subdir)
+        self.output_subdir = (output_subdir if output_subdir is not None else internal_id)
         
         self.check_live = check_live
         self.check_upload = check_upload
