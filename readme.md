@@ -1,4 +1,4 @@
-# Youtube Auto Archiver <sub><sup>v0.5.0</sup></sub>
+# Youtube Auto Archiver <sub><sup>v0.5.1</sup></sub>
 A simple and yet highly configurable Python application that automatically checks if a Youtuber is streaming,
 and downloads said streams while also archiving its latest uploads.
 
