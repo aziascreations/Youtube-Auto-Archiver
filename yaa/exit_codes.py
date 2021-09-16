@@ -26,3 +26,6 @@ ERROR_OUTDATED_CONFIG = 1004
 
 ERROR_RUNNING_AS_ROOT = 1005
 """ Returned when the application is running as 'root' when it shouldn't. """
+
+ERROR_INVALID_CONFIG_FIELD_TYPE = 1006
+""" Returned when one of the field in the config file doesn't have the right data type. """

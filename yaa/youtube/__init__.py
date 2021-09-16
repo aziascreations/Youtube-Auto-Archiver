@@ -68,6 +68,7 @@ class Channel:
         self.yt_dlp_extra_args = yt_dlp_extra_args
         self.allow_upload_while_live = allow_upload_while_live
         
+        # Preparing the worker's logger.
         self.logger = yaa.get_logger(
             "yt-" + internal_id,
             config.get_config_value(
@@ -76,14 +77,25 @@ class Channel:
             )
         )
         
+        # Checking if any unhandled keyword was given as an argument.
         for key, value in kwargs.items():
             self.logger.warning("Unhandled keyword parameter used when creating a channel: {} => {}".format(
                 key, value))
     
     def get_output_path(self) -> str:
+        """
+        Get the output path for the current channel for any file storage task.
+        
+        :return: Output path for the current channel for any file storage task.
+        """
         return os.path.join(config.get_youtube_basedir(), self.output_subdir)
     
     def should_run_worker_live(self) -> bool:
+        """
+        Returns a boolean indicating whether or not the live thread should run.
+        
+        :return: True if the live thread should run, False otherwise.
+        """
         if (not self.check_live) or self.interval_ms_live == -1:
             self.logger.debug("No worker run: disabled")
             return False
@@ -113,28 +125,33 @@ class Channel:
         return False
     
     def should_run_worker_upload(self) -> bool:
+        """
+        Returns a boolean indicating whether or not the upload thread should run.
+        
+        :return: True if the upload thread should run, False otherwise.
+        """
         if (not self.check_upload) or self.interval_ms_upload == -1:
             self.logger.debug("No worker run: disabled")
             return False
-    
+        
         if self.worker_upload is not None:
             if self.worker_upload.is_running():
                 self.logger.debug("No worker run: ongoing")
                 self.check_upload_ongoing = True
                 return False
-    
+        
         if self.check_upload_ongoing:
             # The thread is no longer running but was during the last check.
             self.check_upload_ongoing = False
             self.check_upload_last_timestamp = time.time()
             self.logger.debug("No worker run: was ongoing")
             return False
-    
+        
         if time.time() > self.check_upload_last_timestamp + (self.interval_ms_upload / 1000):
             self.check_upload_last_timestamp = time.time()
             self.logger.debug("Worker run")
             return True
-    
+        
         self.logger.debug("No worker run: not enough time passed ({:.1f}s vs {:.1f}s)".format(
             time.time() - self.check_upload_last_timestamp,
             self.interval_ms_upload / 1000
@@ -143,3 +160,4 @@ class Channel:
 
 
 channels: list[Channel] = list()
+""" List of instantiated and registered Channel objects. """

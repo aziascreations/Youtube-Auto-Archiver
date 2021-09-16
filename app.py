@@ -14,6 +14,7 @@ import yaa.youtube.workers as yt_workers
 
 # Globals
 is_end_signal_raised = False
+end_signal_received: Union[None, signal] = None
 channel: Union[dict, yt.Channel]
 
 # Code
@@ -93,11 +94,24 @@ def sigint_term_handler(sig, frame):
     logger.debug('Setting the global kill-switch and waiting for main loop !')
     global is_end_signal_raised
     is_end_signal_raised = True
+    global end_signal_received
+    end_signal_received = sig
 
 
 logger.info("Registering SIG handlers...")
 signal.signal(signal.SIGINT, sigint_term_handler)
 signal.signal(signal.SIGTERM, sigint_term_handler)
+
+logger.info("Finalizing some things...")
+# Calculating the expected self shutdown time.
+expected_self_shutdown_time = config.get_config_value(-1, ["application", "auto_shutdown_after_ms"])
+if type(expected_self_shutdown_time) is not int:
+    logger.error("The config field 'application.auto_shutdown_after_ms' isn't an integer !")
+    sys.exit(exit_codes.ERROR_INVALID_CONFIG_FIELD_TYPE)
+if expected_self_shutdown_time == -1:
+    expected_self_shutdown_time = float('inf')
+else:
+    expected_self_shutdown_time = float(expected_self_shutdown_time)
 
 logger.info("Entering main loop...")
 while True:
@@ -123,8 +137,35 @@ while True:
     
     time.sleep(1)
     
-    if is_end_signal_raised:
-        logger.debug("Exit requested via signals, breaking the loop !")
+    if is_end_signal_raised or time.time() > expected_self_shutdown_time:
+        logger.debug("Exit requested via signals or reached self-shutdown timestamp !")
+        
+        # Long check
+        if ((not is_end_signal_raised) and
+            (not config.get_config_value(True, ["application", "auto_shutdown_do_wait_for_workers"]))) or\
+                (is_end_signal_raised and
+                 (not config.get_config_value(True, ["application", "signal_shutdown_do_wait_for_workers"]))):
+            # Gracefully killing threads.
+            signal_to_send = (end_signal_received if is_end_signal_raised else signal.SIGTERM)
+            for channel in yt.channels:
+                if channel.worker_upload.is_running():
+                    signal.pthread_kill(channel.worker_upload.thread.ident, signal_to_send)
+                if channel.worker_live.is_running():
+                    signal.pthread_kill(channel.worker_live.thread.ident, signal_to_send)
+        
+        # Waiting for the threads do die.
+        has_found_running_threads: bool = True
+        
+        while has_found_running_threads:
+            has_found_running_threads = False
+            
+            for channel in yt.channels:
+                if channel.worker_upload.is_running() or channel.worker_live.is_running():
+                    has_found_running_threads = True
+                    time.sleep(1)
+                    break
+        
+        # Exiting the main loop
         break
 
 logger.info("Goodbye !")

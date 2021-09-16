@@ -1,4 +1,4 @@
-# Youtube Auto Archiver <sub><sup>v0.5.1</sup></sub>
+# Youtube Auto Archiver <sub><sup>v0.6.0</sup></sub>
 A simple and yet highly configurable Python application that automatically checks if a Youtuber is streaming,
 and downloads said streams while also archiving its latest uploads.
 
@@ -9,7 +9,7 @@ It is still missing a few features such as configurable UIG and GID however.
 
 ## Warning
 Due to the way some commands are executed, it is possible to have a
-[command injection](https://owasp.org/www-community/attacks/Command_Injection)
+[command injection vulnerability](https://owasp.org/www-community/attacks/Command_Injection)
 if you mess up or leave the config file editable by everyone.<br><!--This problem **can be mitigated** if you set up the appropriate [environment variables ](#environment-variables).-->
 This might be fixed in the future, but don't count on it as this project is a personal project.
 
@@ -121,8 +121,40 @@ If said variable does not have a default value, the program will exit and print 
         <td><code>10</code></td>
     </tr>
     <!-- max_working_worker_count -->
-    <!-- auto_shutdown_after_ms -->
-    <!-- auto_shutdown_do_wait_for_workers -->
+    <tr>
+        <td>auto_shutdown_after_ms</td>
+        <td>Integer</td>
+        <td>
+            Delay in milliseconds after which the application should automatically exit with a return code of <code>0</code>.<br>
+            This can be used to restart containers and clean potential memory leaks.<br>
+            Will disable the functionality if set to <code>-1</code>.
+        </td>
+        <td><code>-1</code></td>
+    </tr>
+    <tr>
+        <td>auto_shutdown_do_wait_for_workers</td>
+        <td>Boolean</td>
+        <td>
+            Indicates whether or not the application should wait for all worker's thread to finish without sending
+            a <i>SIGINT</i> or <i>SIGTERM</i> signal back to them after the countdown was reached.<br>
+            If set to <code>False</code>, the application will forcefully kill these threads which could lead to a loss
+            or corruption of data.<br>
+            No new threads will be launched while the main loop waits for all threads to be finished with there work.
+        </td>
+        <td><code>True</code></td>
+    </tr>
+    <tr>
+        <td>signal_shutdown_do_wait_for_workers</td>
+        <td>Boolean</td>
+        <td>
+            Indicates whether or not the application should wait for all worker's thread to finish without sending
+            a <i>SIGINT</i> or <i>SIGTERM</i> signal back to them after receiving a shutdown signal.<br>
+            If set to <code>False</code>, the application will forcefully kill these threads which could lead to a loss
+            or corruption of data.<br>
+            No new threads will be launched while the main loop waits for all threads to be finished with there work.
+        </td>
+        <td><code>True</code></td>
+    </tr>
     <!--<td><code></code></td>-->
 </table>
 
