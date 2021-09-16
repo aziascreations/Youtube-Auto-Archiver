@@ -29,7 +29,6 @@ The application isn't designed to be used by another one as a module.
   * Configurable delays, actions, locations per channel.
 * Planned for v1.0.0
   * Native support for cookies for *yt-dlp* and maybe *streamlink*.
-  * Propagated SIGINT and SIGTERM to child threads.
   * Complete command injection protection. (Unless explicitly disabled for some specific config fields)
 
 ## Requirements
@@ -66,6 +65,9 @@ Simply run [app.py](app.py).
 ## Config
 The config is stored in [config.json](config.json) and has to be in the same folder as [app.py](app.py), unless the
 [environment variables](#environment-variables) tells the application to look elsewhere for it.
+
+A sample minimal config can be found in the [config.minimal.json](config.minimal.json) file, and a complete one in
+[config.json](config.json).
 
 Any value that is set to `null` or is left `undefined` will be set to its default value.<br>
 If said variable does not have a default value, the program will exit and print out the specific error in the logs.
