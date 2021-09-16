@@ -144,6 +144,18 @@ If said variable does not have a default value, the program will exit and print 
         <td><code>True</code></td>
     </tr>
     <tr>
+        <td>auto_shutdown_number_to_send</td>
+        <td>Integer</td>
+        <td>
+            Indicates which signal should be send to threads if <code>auto_shutdown_do_wait_for_workers</code> is set to
+            <code>False</code><br>
+            Allowed values are <code>-1</code>, <code>SIGINT (2)</code> and <code>SIGTERM (15)</code>.<br>
+            If it is set to an incorrect value, or to <code>-1</code>, it will automatically be set to
+            <code>SIGTERM (15)</code> and will be said in the debug-level logs.
+        </td>
+        <td><code>True</code></td>
+    </tr>
+    <tr>
         <td>signal_shutdown_do_wait_for_workers</td>
         <td>Boolean</td>
         <td>

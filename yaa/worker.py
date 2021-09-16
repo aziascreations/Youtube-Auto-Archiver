@@ -36,6 +36,10 @@ class Worker:
     # Return code grabbed from the worker's thread or from the application it ran.
     last_return_code: int
     
+    # Signal for the threads to process when the main thread requests to be ended.
+    # If set to -1, it should be ignored.
+    end_signal_to_process: int
+    
     def __init__(self, name: str = "error.name.not.set", entry_point: Union[Callable, None] = None):
         """
         :param name: Name of the worker used in logging.
@@ -56,6 +60,7 @@ class Worker:
         self.logger_worker = yaa.get_logger(name, config.DEFAULT_LOGGER_LEVEL_WORKER)
         self.logger_thread = None
         self.last_return_code = 0
+        self.end_signal_to_send = -1
         
         # Final checks
         if entry_point is None:

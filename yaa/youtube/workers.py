@@ -1,4 +1,5 @@
 import os
+import signal
 import subprocess
 import time
 from typing import Union
@@ -10,6 +11,9 @@ from yaa.worker import Worker
 
 
 class YouTubeWorker(Worker):
+    """
+    Extension of the Worker class that handles YouTube channels.
+    """
     channel: Channel
     
     def __init__(self, name, entry_point, channel):
@@ -39,7 +43,20 @@ class __WorkerUpload(YouTubeWorker):
         super().__init__(name, entry_point, channel)
 
 
+def __thread_yt_upload_sig_handler(sig, frame):
+    print("#"*50)
+
+
 def __thread_yt_upload(worker: YouTubeWorker, **args):
+    """
+    Thread method for the upload worker that checks if a channel has uploads that match a filter.
+    Once finished, the thread sets the worker's 'last_return_code' variable with the one returned by yt-dlp.
+    
+    :param worker: Worker from which this thread was spawned.
+    :param args: Raw arguments passed by workers. (Not used)
+    :return: Nothing. (See the description for more info)
+    """
+    # Preparing the logger if needed
     if worker.logger_thread is None:
         worker.logger_thread = yaa.get_logger(
             "yt-upload-" + worker.channel.internal_id,
@@ -49,6 +66,11 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
             )
         )
     
+    # Registering SIG handlers...
+    signal.signal(signal.SIGINT, __thread_yt_upload_sig_handler)
+    signal.signal(signal.SIGTERM, __thread_yt_upload_sig_handler)
+    
+    # Preparing the command
     command: str = "yt-dlp --no-warnings --newline --no-progress --dateafter now-{}days {}{}-f {} {}https://www.youtube.com/c/{}".format(
         ("1" if worker.channel.backlog_days_upload < 1 else str(worker.channel.backlog_days_upload)),
         ("" if not worker.channel.break_on_existing else "--break-on-existing "),
@@ -59,6 +81,7 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
     )
     worker.logger_thread.debug("Command: " + command)
     
+    # Running the process
     process: subprocess.Popen = subprocess.Popen(
         command,
         shell=True,
@@ -66,24 +89,20 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
         cwd=os.path.normpath(worker.channel.get_output_path())
     )
     
-    # last_stdout_timestamp: float = time.time()
+    # Waiting for it to finish...
+    has_sent_signal: bool = False
     while process.poll() is None:
-        # Does not work for some reason
-        """if time.time() > last_stdout_timestamp + 2:
-            lines = process.stdout.readlines()
-            process.stdout.flush()
-            for line in lines:
-                worker.logger_thread.debug(line)
-            last_stdout_timestamp = time.time()"""
-        
+        if (not has_sent_signal) and (worker.end_signal_to_process != -1):
+            process.send_signal(worker.end_signal_to_process)
+            has_sent_signal = True
         # Prevents CPU hogging
-        time.sleep(1)
+        time.sleep(0.2)
     
     # Just in case...
     process.wait()
     
     worker.last_return_code = process.returncode
-
+    
     lines = process.stdout.readlines()
     process.stdout.flush()
     for line in lines:
@@ -93,6 +112,14 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
 
 
 def __thread_yt_live(worker: YouTubeWorker, **args):
+    """
+    Thread method for the live worker that checks if a channel is currently livestreaming.
+    Once finished, the thread sets the worker's 'last_return_code' variable with the one returned by streamlink.
+    
+    :param worker: Worker from which this thread was spawned.
+    :param args: Raw arguments passed by workers. (Not used)
+    :return: Nothing. (See the description for more info)
+    """
     # Preparing the logger if needed
     if worker.logger_thread is None:
         worker.logger_thread = yaa.get_logger(
@@ -103,12 +130,14 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
             )
         )
     
+    # Preparing the base filename with no extension
     file_base_name: str = "{}{}-live-{}".format(
         config.config["youtube"]["general_prefix"],
         worker.channel.internal_id,
         str(int(time.time()))
     )
     
+    # Preparing the command
     command: str = "streamlink --hls-live-restart -o \"{}\" https://www.youtube.com/c/{}/live {}".format(
         os.path.normpath(os.path.join(worker.channel.get_output_path(), file_base_name + ".mp4")),
         worker.channel.channel_id,
@@ -120,8 +149,11 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
     process_start_time: Union[float, None] = time.time()
     metadata_delay: float = config.get_youtube_live_metadata_delay_ms() / 1000
     
+    # Running the processes
     process: subprocess.Popen = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE)
     process_yt_dlp: Union[subprocess.Popen, None] = None
+    has_sent_signal: bool = False
+    
     while process.poll() is None:
         if metadata_delay != -1 and process_start_time is not None:
             if time.time() > process_start_time + metadata_delay:
@@ -139,8 +171,15 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
                 process_start_time = None
                 metadata_delay = -1
         
+        if (not has_sent_signal) and (worker.end_signal_to_process != -1):
+            process.send_signal(worker.end_signal_to_process)
+            if process_yt_dlp is not None:
+                if process_yt_dlp.poll() is None:
+                    process_yt_dlp.send_signal(worker.end_signal_to_process)
+            has_sent_signal = True
+        
         # Prevents CPU hogging
-        time.sleep(0.001)
+        time.sleep(0.01)
     
     # Just in case...
     process.wait()

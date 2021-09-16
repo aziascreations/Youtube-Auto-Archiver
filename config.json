@@ -4,6 +4,7 @@
     "logging_level_main": 20,
     "auto_shutdown_after_ms": -1,
     "auto_shutdown_do_wait_for_workers": true,
+    "auto_shutdown_number_to_send": -1,
     "signal_shutdown_do_wait_for_workers": true
   },
   "youtube": {

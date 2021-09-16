@@ -1,6 +1,7 @@
 import logging
 import os
 import time
+from typing import Union
 
 import yaa
 import yaa.config as config
@@ -20,8 +21,8 @@ class Channel:
     interval_ms_live: int
     interval_ms_upload: int
     
-    worker_live: Worker
-    worker_upload: Worker
+    worker_live: Union[Worker, None]
+    worker_upload: Union[Worker, None]
     
     quality_live: str
     quality_upload: str
