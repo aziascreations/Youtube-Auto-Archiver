@@ -153,7 +153,7 @@ If said variable does not have a default value, the program will exit and print 
             If it is set to an incorrect value, or to <code>-1</code>, it will automatically be set to
             <code>SIGTERM (15)</code> and will be said in the debug-level logs.
         </td>
-        <td><code>True</code></td>
+        <td><code>-1</code></td>
     </tr>
     <tr>
         <td>signal_shutdown_do_wait_for_workers</td>
@@ -165,7 +165,7 @@ If said variable does not have a default value, the program will exit and print 
             or corruption of data.<br>
             No new threads will be launched while the main loop waits for all threads to be finished with there work.
         </td>
-        <td><code>True</code></td>
+        <td><code>False</code></td>
     </tr>
     <!--<td><code></code></td>-->
 </table>

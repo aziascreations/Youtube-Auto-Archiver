@@ -110,8 +110,11 @@ expected_self_shutdown_time = config.get_config_value(-1, ["application", "auto_
 end_signal_to_use = config.get_config_value(-1, ["application", "auto_shutdown_number_to_send"])
 if type(end_signal_to_use) is str:
     end_signal_to_use = str(end_signal_to_use)
-if end_signal_to_use not in [signal.SIGINT, signal.SIGTERM]:
-    logger.debug("Setting the auto-shutdown signal to -1. (Invalid value)")
+if end_signal_to_use not in [-1, signal.SIGINT, signal.SIGTERM]:
+    logger.debug("Setting the auto-shutdown signal to -1. (Invalid value -> {}:{})".format(
+        type(end_signal_to_use),
+        end_signal_to_use
+    ))
     end_signal_to_use = -1
 if end_signal_to_use == -1:
     logger.debug("Setting the auto-shutdown signal to SIGTERM. (Was set to -1)")
@@ -153,10 +156,10 @@ while True:
         logger.debug("Exit requested via signals or reached self-shutdown timestamp !")
         
         # Long check
-        if ((not is_end_signal_raised) and
+        if ((time.time() > expected_self_shutdown_time) and
             (not config.get_config_value(True, ["application", "auto_shutdown_do_wait_for_workers"]))) or\
                 (is_end_signal_raised and
-                 (not config.get_config_value(True, ["application", "signal_shutdown_do_wait_for_workers"]))):
+                 (not config.get_config_value(False, ["application", "signal_shutdown_do_wait_for_workers"]))):
             # Gracefully killing threads.
             for channel in yt.channels:
                 logger.debug("Sending signals to channel '{}'...".format(channel.name))

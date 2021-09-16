@@ -60,7 +60,7 @@ class Worker:
         self.logger_worker = yaa.get_logger(name, config.DEFAULT_LOGGER_LEVEL_WORKER)
         self.logger_thread = None
         self.last_return_code = 0
-        self.end_signal_to_send = -1
+        self.end_signal_to_process = -1
         
         # Final checks
         if entry_point is None:

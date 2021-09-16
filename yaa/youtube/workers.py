@@ -93,6 +93,7 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
     has_sent_signal: bool = False
     while process.poll() is None:
         if (not has_sent_signal) and (worker.end_signal_to_process != -1):
+            worker.logger_thread.debug("Detected a shutdown signal ! ({})".format(worker.end_signal_to_process))
             process.send_signal(worker.end_signal_to_process)
             has_sent_signal = True
         # Prevents CPU hogging
@@ -172,6 +173,7 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
                 metadata_delay = -1
         
         if (not has_sent_signal) and (worker.end_signal_to_process != -1):
+            worker.logger_thread.info("Detected a shutdown signal ! ({})".format(worker.end_signal_to_process))
             process.send_signal(worker.end_signal_to_process)
             if process_yt_dlp is not None:
                 if process_yt_dlp.poll() is None:
