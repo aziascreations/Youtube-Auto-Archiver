@@ -1,0 +1,18 @@
+version: "3"
+
+services:
+  youtube-archiver:
+    container_name: youtube-archiver
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        - BUID=0
+        - BGID=0
+    environment:
+      YAA_ALLOW_ROOT: 1
+      YAA_CONFIG_PATH: "/data/config.json"
+    volumes:
+      - ./data:/data
+      - ./config-docker.json:/data/config.json:ro
+    restart: unless-stopped

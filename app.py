@@ -76,7 +76,6 @@ except Exception as err:
 logger.debug("* Changing logging level for '{}' to '{}'".format(
     logger.name, config.application.logging_level_main))
 logger.setLevel(config.application.logging_level_main)
-logger.debug("* Dump: {}".format(config))
 
 # > Processing the config file.
 logger.info("Processing the YouTube channels...")
@@ -156,6 +155,7 @@ if end_signal_to_use == -1:
     end_signal_to_use = signal.SIGTERM
 
 # > Main loop
+# TODO: Add a gc.collect() call
 logger.info("Entering main loop...")
 logger.info("\033[36m-\033[94m===========================\033[36m-\033[39m")
 while True:
