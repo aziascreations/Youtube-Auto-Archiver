@@ -77,6 +77,7 @@ class YouTubeChannel:
         """
         return os.path.join(self.config.get_youtube_basedir(), self.channel_config.output_subdir)
     
+    # FIXME: Move this method elsewhere
     def should_run_worker_live(self) -> bool:
         """
         Returns a boolean indicating whether the live thread should run.
@@ -110,7 +111,8 @@ class YouTubeChannel:
             self.channel_config.interval_ms_live / 1000
         ))
         return False
-    
+
+    # FIXME: Move this method elsewhere
     def should_run_worker_upload(self) -> bool:
         """
         Returns a boolean indicating whether the upload thread should run.
@@ -118,12 +120,12 @@ class YouTubeChannel:
         :return: True if the upload thread should run, False otherwise.
         """
         if (not self.channel_config.check_upload) or self.channel_config.interval_ms_upload == -1:
-            self.logger.debug("No worker run: disabled")
+            self.logger.debug("Worker not ran: disabled")
             return False
         
         if self.worker_upload is not None:
             if self.worker_upload.is_running():
-                self.logger.debug("No worker run: ongoing")
+                self.logger.debug("Worker not ran: ongoing")
                 self.check_upload_ongoing = True
                 return False
         
@@ -131,7 +133,7 @@ class YouTubeChannel:
             # The thread is no longer running but was during the last check.
             self.check_upload_ongoing = False
             self.check_upload_last_timestamp = time.time()
-            self.logger.debug("No worker run: was ongoing")
+            self.logger.debug("Worker not ran: was ongoing")
             return False
         
         if time.time() > self.check_upload_last_timestamp + (self.channel_config.interval_ms_upload / 1000):
@@ -139,7 +141,7 @@ class YouTubeChannel:
             self.logger.debug("Worker run")
             return True
         
-        self.logger.debug("No worker run: not enough time passed ({:.1f}s vs {:.1f}s)".format(
+        self.logger.debug("Worker not ran: not enough time passed ({:.1f}s vs {:.1f}s)".format(
             time.time() - self.check_upload_last_timestamp,
             self.channel_config.interval_ms_upload / 1000
         ))

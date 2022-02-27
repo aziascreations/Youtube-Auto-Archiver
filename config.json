@@ -1,7 +1,7 @@
 {
   "application": {
     "root_output_dir": "./data",
-    "logging_level_main": 20,
+    "logging_level_main": 10,
     "auto_shutdown_after_ms": -1,
     "auto_shutdown_do_wait_for_workers": true,
     "auto_shutdown_number_to_send": -1,
@@ -19,10 +19,10 @@
         "channel_id": "RogueInternetMan",
         "name": "Rogue, Internet Man",
         "output_subdir": "./rogue_internet_man",
-        "check_live": true,
+        "check_live": false,
         "check_upload": true,
         "interval_ms_live": 90000,
-        "interval_ms_upload": 3700000,
+        "interval_ms_upload": 5000,
         "quality_live": "best",
         "quality_upload": "bestvideo[ext!=webm]??+bestaudio[ext!=webm]??/best[ext!=webm]",
         "backlog_days_upload": 7,

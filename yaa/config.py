@@ -1,5 +1,6 @@
 # Imports
 import json
+import logging
 import os
 import sys
 
@@ -12,9 +13,9 @@ __logger_config = logger.get_logger("config")
 
 # Constants
 CONFIG_PATH_DEFAULT = os.getenv("YAA_CONFIG_PATH", "./config.json")
-
-# Temp
-DEFAULT_LOGGER_LEVEL_APPLICATION = 10
+DEFAULT_LOGGER_LEVEL_APPLICATION = logging.DEBUG
+DEFAULT_LOGGER_LEVEL_WORKER = logging.DEBUG
+DEFAULT_LOGGER_LEVEL_THREAD = logging.DEBUG
 
 
 # Classes

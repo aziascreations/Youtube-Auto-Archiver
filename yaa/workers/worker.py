@@ -1,11 +1,13 @@
+# Imports
 import logging
 import threading
 from typing import Callable, Union
 
-import yaa
-from yaa import config
+import yaa.config as config
+from yaa.logger import get_logger
 
 
+# Classes
 class Worker:
     """
     Generic worker class used to represent any Worker when its specific role is not relevant.
@@ -57,7 +59,7 @@ class Worker:
         self.entry_point = entry_point
         self.thread = None
         self.lock = threading.Lock()
-        self.logger_worker = yaa.get_logger(name, config.DEFAULT_LOGGER_LEVEL_WORKER)
+        self.logger_worker = get_logger(name, config.DEFAULT_LOGGER_LEVEL_WORKER)
         self.logger_thread = None
         self.last_return_code = 0
         self.end_signal_to_process = -1
@@ -70,7 +72,7 @@ class Worker:
         """
         Starts a thread for the current worker if none are currently running and if 'entry_point' is callable.
         :param args: Arguments that need to be passed to the new thread.
-        :return: True or False depending on whether or not the thread was started.
+        :return: True or False depending on whether the thread was started.
         """
         self.logger_worker.debug("Checking to prepare the Thread launch...")
         
@@ -100,7 +102,7 @@ class Worker:
         """
         Checks if the worker currently has its thread running.
         
-        :return: True or False depending on whether or not the worker is currently running a thread.
+        :return: True or False depending on whether the worker is currently running a thread.
         """
         if self.thread is not None:
             return self.thread.is_alive()

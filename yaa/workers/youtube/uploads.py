@@ -30,10 +30,6 @@ def create_upload_worker(channel: YouTubeChannel) -> YouTubeWorker:
     return __WorkerUpload("worker-yt-upload-" + channel.channel_config.internal_id, __thread_yt_upload, channel)
 
 
-def __thread_yt_upload_sig_handler(sig, frame):
-    print("#" * 50)
-
-
 def __thread_yt_upload(worker: YouTubeWorker, **args):
     """
     Thread method for the upload worker that checks if a channel has uploads that match a filter.
@@ -49,10 +45,6 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
             "yt-upload-" + worker.channel.channel_config.internal_id,
             worker.channel.config.youtube.logging_level_thread
         )
-    
-    # Registering SIG handlers...
-    signal.signal(signal.SIGINT, __thread_yt_upload_sig_handler)
-    signal.signal(signal.SIGTERM, __thread_yt_upload_sig_handler)
     
     # Preparing the command
     command: str = "yt-dlp --no-warnings --newline --no-progress --dateafter now-{}days {}{}-f {} {}" \
