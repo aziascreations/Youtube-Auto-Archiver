@@ -10,16 +10,14 @@ from typing import Union
 import yaa.config as yaa_config
 import yaa.exit_codes as exit_codes
 from yaa.logger import get_logger
-# import yaa.youtube as yt
+from yaa.youtube import YouTubeChannel
 # import yaa.youtube.workers as yt_workers
 
 # Globals
 is_end_signal_raised = False
-end_signal_to_use: Union[int, str]
-# channel: Union[dict, yt.Channel]
+channels: list[YouTubeChannel] = list()
 
 # Application's code
-
 # > Preparing the config and logger
 logger = get_logger("main", yaa_config.DEFAULT_LOGGER_LEVEL_APPLICATION)
 
@@ -80,32 +78,32 @@ logger.setLevel(config.application.logging_level_main)
 logger.debug("* Dump: {}".format(config))
 
 # > Processing the config file.
-# logger.info("Processing the YouTube channels...")
-# for channel in config.get_config_value([], ["youtube", "channels"]):
-#     channel["name"] = (channel["name"] if "name" in channel else channel["internal_id"])
-#     logger.debug("Registering '{}'".format(channel["name"]))
-#     yt.channels.append(yt.Channel(**channel))
+logger.info("Processing the YouTube channels...")
+for channel_config in config.youtube.channels:
+    channel_config.name = (channel_config.name if channel_config is not None else channel_config.internal_id)
+    logger.debug("Registering '{}'".format(channel_config.name))
+    channels.append(YouTubeChannel(config, channel_config))
 
-"""
-
+# > Preparing the YouTube Workers.
 logger.info("Preparing the YouTube Workers for {} channel{}...".format(
-    len(yt.channels), ("s" if len(yt.channels) > 1 else "")))
-for channel in yt.channels:
-    if channel.check_live and channel.interval_ms_live != -1:
-        logger.debug("Adding live worker for '{}'".format(channel.name))
+    len(channels), ("s" if len(channels) > 1 else "")))
+for channel in channels:
+    if channel.channel_config.check_live and channel.channel_config.interval_ms_live != -1:
+        logger.debug("Adding live worker for '{}'".format(channel.channel_config.name))
         channel.worker_live = yt_workers.create_live_worker(channel)
         pass
-    if channel.check_upload and channel.interval_ms_upload != -1:
-        logger.debug("Adding upload worker for '{}'".format(channel.name))
+    if channel.channel_config.check_upload and channel.channel_config.interval_ms_upload != -1:
+        logger.debug("Adding upload worker for '{}'".format(channel.channel_config.name))
         channel.worker_upload = yt_workers.create_upload_worker(channel)
         pass
 
+# > Preparing the output folders if needed.
 logger.info("Preparing the output folder structure...")
 try:
     os.makedirs(config.get_root_data_dir(), exist_ok=True)
     os.makedirs(config.get_youtube_basedir(), exist_ok=True)
-    for yt_channel in yt.channels:
-        os.makedirs(yt_channel.get_output_path(), exist_ok=True)
+    for channel in channels:
+        os.makedirs(channel.get_output_path(), exist_ok=True)
 except OSError as err:
     logger.error("Failed to create some of the required folders !")
     logger.error(err)
@@ -127,10 +125,11 @@ signal.signal(signal.SIGTERM, sigint_term_handler)
 
 logger.info("Finalizing some things...")
 # Calculating the expected self shutdown time.
-expected_self_shutdown_time = config.get_config_value(-1, ["application", "auto_shutdown_after_ms"])
+expected_self_shutdown_time = config.application.auto_shutdown_after_ms
+# FIXME: Finish this !
 
 # Preparing the self-shutdown signal number.
-end_signal_to_use = config.get_config_value(-1, ["application", "auto_shutdown_number_to_send"])
+end_signal_to_use: Union[int, str] = config.application.auto_shutdown_number_to_send
 if type(end_signal_to_use) is str:
     end_signal_to_use = str(end_signal_to_use)
 if end_signal_to_use not in [-1, signal.SIGINT, signal.SIGTERM]:
@@ -152,6 +151,7 @@ else:
     expected_self_shutdown_time = float(expected_self_shutdown_time)
 
 logger.info("Entering main loop...")
+logger.info("\033[36m-\033[94m===========================\033[36m-\033[39m")
 while True:
     for channel in yt.channels:
         # Checking if a "live" worker can and should run
@@ -214,7 +214,6 @@ while True:
         # Exiting the main loop
         break
 
-"""
 
 # > Printing the logs footer
 logger.info("Goodbye !")

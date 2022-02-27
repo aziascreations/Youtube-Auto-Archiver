@@ -159,13 +159,29 @@ class ConfigYoutube:
 
 @dataclass
 class ConfigRoot:
-    """???"""
+    """Main class that contains all the application's config"""
     
     application: ConfigApplication = ConfigApplication()
     """Contains the configs that are use globally by the application."""
     
     youtube: ConfigYoutube = ConfigYoutube()
     """Contains the configs for the YouTube related part of the application."""
+    
+    def get_root_data_dir(self) -> str:
+        """
+        Get the absolute path for any file storage task.
+        
+        :return: Absolute path to the root folder used for any file storage task.
+        """
+        return os.path.abspath(self.application.root_output_dir)
+    
+    def get_youtube_basedir(self) -> str:
+        """
+        Get the absolute path for any YouTube-related file storage task.
+        
+        :return: Absolute path to the root directory for YouTube-related file storage task.
+        """
+        return os.path.abspath(os.path.join(self.get_root_data_dir(), self.youtube.output_subdir))
 
 
 # Methods

@@ -1,2 +1,2 @@
-streamlink
-yt-dlp
+streamlink==2.3.0
+yt-dlp==2021.12.01
