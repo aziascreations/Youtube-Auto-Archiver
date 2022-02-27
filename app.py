@@ -1,53 +1,72 @@
 #!/usr/local/bin/python
+
+# Imports
 import os
 import signal
 import sys
 import time
 from typing import Union
 
-import yaa
-import yaa.config as config
+import yaa.config as yaa_config
 import yaa.exit_codes as exit_codes
-from yaa.version import __version__ as version
-import yaa.youtube as yt
-import yaa.youtube.workers as yt_workers
+from yaa.logger import get_logger
+# import yaa.youtube as yt
+# import yaa.youtube.workers as yt_workers
 
 # Globals
 is_end_signal_raised = False
 end_signal_to_use: Union[int, str]
-channel: Union[dict, yt.Channel]
+# channel: Union[dict, yt.Channel]
 
-# Code
-logger = yaa.get_logger("main", config.DEFAULT_LOGGER_LEVEL_APPLICATION)
-logger.info("#############################{}".format("#"*len(version)))
-logger.info("# Youtube-Auto-Archiver - v{} #".format(version))
-logger.info("#############################{}".format("#"*len(version)))
+# Application's code
 
-# Check to see if the application is running as 'root'.
+# > Preparing the config and logger
+logger = get_logger("main", yaa_config.DEFAULT_LOGGER_LEVEL_APPLICATION)
+
+# > Printing the logs header
+logger.info("          \033[36m_   \033[94m__  \033[36m_\033[39m")
+logger.info("     \033[96m_  \033[36m_// \033[94m/\\\\ \\ \033[36m\\\\_  \033[96m_\033[39m")
+logger.info("   \033[96m_// \033[36m/ / \033[94m/ /_\\ \\ \033[36m\\ \\ \033[96m\\\\_\033[39m")
+logger.info("  \033[96m/ / \033[36m/ / \033[94m/ ___\\\\ \\ \033[36m\\ \\ \033[96m\\ \\\033[39m")
+logger.info(" \033[96m/_/ \033[36m/_/ \033[94m/_/     \033[94m\\_\\ \033[36m\\_\\ \033[96m\\_\\\033[39m")
+logger.info("\033[36m-\033[94m===========================\033[36m-\033[39m")
+logger.info("    \033[36mYoutube-Auto-Archiver\033[39m")
+logger.info("\033[36m-\033[94m===========================\033[36m-\033[39m")
+
+# > Checking if the application is running as 'root'.
 if hasattr(os, "getuid"):
+    allow_root_user = os.getenv("YAA_ALLOW_ROOT", "1")
+    if allow_root_user in ["0", "1"]:
+        allow_root_user = bool(int(allow_root_user))
+    else:
+        logger.error("The 'YAA_ALLOW_ROOT' environment variable is not set to '1' or '0' !")
+        sys.exit(exit_codes.ERROR_INVALID_ENV_VAR)
+    
     if os.getuid() == 0:
-        if config.ALLOW_ROOT:
+        if allow_root_user:
             logger.warning("This application is running as 'root',"
                            " you should change the UID and GUID for safety reason !")
         else:
             logger.error("The application is running as 'root' ! (UID==0)")
             sys.exit(exit_codes.ERROR_RUNNING_AS_ROOT)
 
-# Changing CWD to app.py's location. (Mainly done for Docker since I couldn't be bothered to write a bash script for it)
+# > Changing the CWD to app.py's location.
+#   !> Mainly done for Docker since I couldn't be bothered to write a bash script for it.
 logger.info("Correcting CWD...")
 try:
-    logger.debug("Going from '{}' to '{}'".format(os.getcwd(), os.path.dirname(os.path.realpath(__file__))))
+    logger.debug("* Original: '{}'".format(os.getcwd()))
+    logger.debug("* Final: '{}'".format(os.path.dirname(os.path.realpath(__file__))))
     os.chdir(os.path.dirname(os.path.realpath(__file__)))
 except Exception as err:
     logger.error("Failed to change the current working directory !")
     logger.error(err)
     sys.exit(exit_codes.ERROR_CWD_FAILURE)
 
-# Loading the config file (Soft link used in Docker)
+# > Loading the config file.  (Soft link is used in Docker)
 logger.info("Loading config file...")
 try:
-    config.load()
-except OSError as err:
+    config = yaa_config.load_config()
+except IOError as err:
     logger.error("Failed to load the config file !")
     logger.error(err)
     sys.exit(exit_codes.ERROR_CONFIG_OS_ERROR)
@@ -55,15 +74,19 @@ except Exception as err:
     logger.error("Failed to parse the config file !")
     logger.error(err)
     sys.exit(exit_codes.ERROR_CONFIG_JSON_ERROR)
-logger.setLevel(config.get_config_value(10, ["application", "logging_level_main"]))
-logger.debug("Config loaded: {}".format(config.json.dumps(config.config)))
+logger.debug("* Changing logging level for '{}' to '{}'".format(
+    logger.name, config.application.logging_level_main))
+logger.setLevel(config.application.logging_level_main)
+logger.debug("* Dump: {}".format(config))
 
-# Parsing the config file
-logger.info("Parsing the YouTube channels...")
-for channel in config.get_config_value([], ["youtube", "channels"]):
-    channel["name"] = (channel["name"] if "name" in channel else channel["internal_id"])
-    logger.debug("Registering '{}'".format(channel["name"]))
-    yt.channels.append(yt.Channel(**channel))
+# > Processing the config file.
+# logger.info("Processing the YouTube channels...")
+# for channel in config.get_config_value([], ["youtube", "channels"]):
+#     channel["name"] = (channel["name"] if "name" in channel else channel["internal_id"])
+#     logger.debug("Registering '{}'".format(channel["name"]))
+#     yt.channels.append(yt.Channel(**channel))
+
+"""
 
 logger.info("Preparing the YouTube Workers for {} channel{}...".format(
     len(yt.channels), ("s" if len(yt.channels) > 1 else "")))
@@ -157,7 +180,7 @@ while True:
         
         # Long check
         if ((time.time() > expected_self_shutdown_time) and
-            (not config.get_config_value(True, ["application", "auto_shutdown_do_wait_for_workers"]))) or\
+            (not config.get_config_value(True, ["application", "auto_shutdown_do_wait_for_workers"]))) or \
                 (is_end_signal_raised and
                  (not config.get_config_value(False, ["application", "signal_shutdown_do_wait_for_workers"]))):
             # Gracefully killing threads.
@@ -191,5 +214,12 @@ while True:
         # Exiting the main loop
         break
 
+"""
+
+# > Printing the logs footer
 logger.info("Goodbye !")
+logger.info("\033[36m-\033[94m===========================\033[36m-\033[39m")
+logger.info(" \033[96m\\_\\ \033[36m\\_\\             \033[36m/_/ \033[96m/_/\033[39m")
+
+# > Exiting properly
 sys.exit(exit_codes.NO_ERROR)

@@ -7,7 +7,7 @@ from typing import Union
 import yaa
 import yaa.config as config
 from yaa.youtube import Channel
-from yaa.worker import Worker
+from yaa.workers.worker import Worker
 
 
 class YouTubeWorker(Worker):

@@ -1,140 +1,201 @@
+# Imports
 import json
-import logging
 import os
 import sys
-from typing import Union
 
-import yaa
-from yaa import exit_codes as exit_codes
+from . import logger, exit_codes
 
-# Setting up the private logger, only used for warnings and errors, should not be muted, ever.
-__logger_config = yaa.get_logger("config", logging.WARNING)
-# __logger_config.setLevel(logging.DEBUG) # (Only used when debugging specific errors)
+from dataclasses import dataclass, field
 
-# Reading and validating the 'YAA_CONFIG_PATH' environment variable
-__CONFIG_PATH_DEFAULT = "./config.json"
-CONFIG_PATH = os.getenv("YAA_CONFIG_PATH", __CONFIG_PATH_DEFAULT)
+# Globals
+__logger_config = logger.get_logger("config")
 
-# Reading and validating the 'YAA_ALLOW_ROOT' environment variable
-ALLOW_ROOT = os.getenv("YAA_ALLOW_ROOT", "1")
-if ALLOW_ROOT in ["0", "1"]:
-    ALLOW_ROOT = bool(int(ALLOW_ROOT))
-else:
-    ALLOW_ROOT = True
-    __logger_config.error("The 'YAA_ALLOW_ROOT' environment variable is not set to '1' or '0' !")
+# Constants
+CONFIG_PATH_DEFAULT = os.getenv("YAA_CONFIG_PATH", "./config.json")
 
-# Reading and validating the 'YAA_ALLOW_RAW_PARAMETERS' environment variable
-# Not used for the moment since the quality argument is still vulnerable to command injection attacks.
-# ALLOW_RAW_PARAMETERS = os.getenv("YAA_ALLOW_RAW_PARAMETERS", "1")
-# if ALLOW_RAW_PARAMETERS in ["0", "1"]:
-#     ALLOW_RAW_PARAMETERS = bool(int(ALLOW_RAW_PARAMETERS))
-# else:
-#     ALLOW_RAW_PARAMETERS = True
-#     __logger_config.error("The 'YAA_ALLOW_RAW_PARAMETERS' environment variable is not set to '1' or '0' !")
-
-DEFAULT_DELAY_MS_METADATA_DOWNLOAD = 30000
-DEFAULT_APPLICATION_ROOT_OUTPUT_DIRECTORY = "./data"
-DEFAULT_YOUTUBE_MAIN_OUTPUT_DIRECTORY = "./youtube"
-
-DEFAULT_LOGGER_LEVEL_APPLICATION = logging.DEBUG
-DEFAULT_LOGGER_LEVEL_WORKER = logging.DEBUG
-DEFAULT_LOGGER_LEVEL_THREAD = logging.DEBUG
-
-config: dict = dict()
+# Temp
+DEFAULT_LOGGER_LEVEL_APPLICATION = 10
 
 
-def load(config_path: str = CONFIG_PATH) -> None:
-    if not os.path.exists(config_path):
-        raise OSError("The config file '{}' could not be found !".format(config_path))
+# Classes
+@dataclass
+class ConfigApplication:
+    """Config fields related to the application itself."""
     
-    f = open(config_path, "r")
-    try:
-        global config
-        config = json.load(f)
-    except Exception as err:
-        f.close()
-        raise err
-    f.close()
+    root_output_dir: str = "./data"
+    """Root directory where the downloaded data should be stored in."""
+    
+    logging_level_main: int = 20
+    """
+    Logging level for the main app.
+    See Python's documentation for more information
+    """
+    
+    auto_shutdown_after_ms: int = -1
+    """
+    Delay in milliseconds after which the application should automatically exit with a return code of 0.
+    This can be used to restart containers and clean potential memory leaks.
+    """
+    
+    auto_shutdown_do_wait_for_workers: bool = True
+    """
+    Indicates whether or not the application should wait for all worker's thread to finish without sending a SIGINT or SIGTERM signal back to them after the countdown was reached.
+    If set to False, the application will forcefully kill these threads which could lead to a loss or corruption of data.
+    No new threads will be launched while the main loop waits for all threads to be finished with there work.
+    """
+    
+    auto_shutdown_number_to_send: int = -1
+    """
+    Indicates which signal should be send to threads if auto_shutdown_do_wait_for_workers is set to False.
+    Allowed values are -1, SIGINT (2) and SIGTERM (15).
+    If it is set to an incorrect value, or to -1, it will automatically be set to SIGTERM (15) and will be said in the debug-level logs.
+    """
+    
+    signal_shutdown_do_wait_for_workers: bool = False
+    """
+    Indicates whether or not the application should wait for all worker's thread to finish without sending a SIGINT or SIGTERM signal back to them after receiving a shutdown signal.
+    If set to False, the application will forcefully kill these threads which could lead to a loss or corruption of data.
+    No new threads will be launched while the main loop waits for all threads to be finished with there work.
+    """
+
+
+@dataclass
+class ConfigYoutubeChannel:
+    internal_id: str
+    """Arbitrary string used in downloaded files and loggers' names."""
+    
+    channel_id: str
+    """Id of the relevant YouTube channel."""
+    
+    name: str
+    """Friendly name used in logging only."""
+    
+    output_subdir: str
+    """
+    Directory in which all the files for this channel are downloaded into.
+    Appended to application.root_output_dir and youtube.output_subdir.
+    """
+    
+    check_live: bool = False
+    """Toggles the live downloading worker and threads."""
+    
+    check_upload: bool = False
+    """Toggles the video downloading worker and threads."""
+    
+    interval_ms_live: int = -1
+    """
+    Delay in ms between each verification of the channel to see if it is livestreaming.
+    Will disable the functionality if set to -1.
+    """
+    
+    interval_ms_upload: int = -1
+    """
+    Delay in ms between each verification of the channel to see if it is livestreaming.
+    Will disable the functionality if set to -1.
+    """
+    
+    quality_live: str = "best"
+    """Quality setting used in streamlink when downloading a live."""
+    
+    quality_upload: str = "best"
+    """Quality setting used in yt-dlp with the -f option."""
+    
+    backlog_days_upload: int = 7
+    """
+    Number of days to look back to for uploads
+    Added as-is in the --dateafter now-Xdays option where X is the number of days given here.
+    """
+    
+    break_on_existing: bool = True
+    """Indicates if yt-dlp should stop downloading uploads when encountering an existing completed download."""
+    
+    break_on_reject: bool = True
+    """Indicates if yt-dlp should stop downloading uploads when encountering a filtered video."""
+    
+    yt_dlp_extra_args: str = ""
+    """Extra args added as-is to the yt-dlp command right before the channel URL."""
+    
+    allow_upload_while_live: bool = True
+    """Indicates whether yt-dlp can download videos while a live worker is running for the given channel."""
+
+
+@dataclass
+class ConfigYoutube:
+    """Config fields related to all YouTube-centric tasks."""
+    
+    output_subdir: str = "./youtube"
+    """
+    Directory in which all YouTube related downloads are stored.
+    Appended to application.root_output_dir.
+    """
+
+    general_prefix: str = "yt-"
+    """
+    Prefix added to every downloaded file related to YouTube.
+    (WILL BE REMOVED IN THE NEXT MAJOR VERSION)
+    """
+    
+    delay_ms_metadata_download: int = 30000
+    """
+    Delay in ms between the start of a live downloader thread and the moment it attempts to download its thumbnail and description.
+    Can be disabled if set to -1.
+    """
+    
+    logging_level_worker: int = 10
+    """
+    Logging level for all YouTube-related workers.
+    See Python's documentation for more information
+    """
+    
+    logging_level_thread: int = 10
+    """
+    Logging level for all YouTube-related threads.
+    See Python's documentation for more information
+    """
+    
+    channels: list[ConfigYoutubeChannel] = field(default_factory=lambda: [])
+    """List of channels' info for the workers"""
+
+
+@dataclass
+class ConfigRoot:
+    """???"""
+    
+    application: ConfigApplication = ConfigApplication()
+    """Contains the configs that are use globally by the application."""
+    
+    youtube: ConfigYoutube = ConfigYoutube()
+    """Contains the configs for the YouTube related part of the application."""
+
+
+# Methods
+def load_config(config_path: str = CONFIG_PATH_DEFAULT) -> ConfigRoot:
+    """
+    Reads the given config file and returns a proper config object.
+    
+    :param config_path: Path to the config file.
+    :return: The parsed config file.
+    :raises IOError: If the config file couldn't be found.
+    :raises IOError: If the config file couldn't be found.
+    """
+    
+    if not os.path.exists(config_path):
+        raise IOError("The config file '{}' could not be found !".format(config_path))
+    
+    with open(config_path, "r") as f:
+        _raw_config = json.load(f)
     
     # Quickly checking if the config file is outdated. (v0.4.0 or older)
-    if "application" in config:
-        if "base_output_dir" in config["application"]:
+    if "application" in _raw_config:
+        if "base_output_dir" in _raw_config["application"]:
             __logger_config.error("Please update you config file !")
             __logger_config.error("It is still using the format for the 0.4.0 version of the application !")
             __logger_config.error("Once you remove the 'application.base_output_dir' field, this error will go away !")
             sys.exit(exit_codes.ERROR_OUTDATED_CONFIG)
-
-
-def get_config_value(default_value: Union[str, int, float, None, list, dict, bool],
-                     *args: Union[str, list[str], tuple]) -> Union[str, int, float, None, list, dict, bool]:
-    """
-    Returns the value, or the default value, of one of the fields in the config file.
     
-    :param default_value: Value to return in case the filed could not be found.
-    :param args: Location of the field in the config file as a list of strings.
-    :return: The desired or default value.
-    """
-    current_config_section = config
+    config = ConfigRoot(**_raw_config)
+    config.application = ConfigApplication(**config.application)
+    config.youtube = ConfigYoutube(**config.youtube)
+    config.youtube.channels = [ConfigYoutubeChannel(**x) for x in config.youtube.channels]
     
-    if args is None:
-        raise ValueError("The config requested is None !")
-    
-    if len(args) <= 0:
-        raise ValueError("No config path given !")
-    
-    if config is None:
-        __logger_config.warning("You requested a value while the config is not loaded !")
-        return default_value
-    
-    if type(args[0]) is list:
-        args = tuple(args[0])
-    
-    if type(args[0]) is tuple:
-        args = args[0]
-    
-    for config_key in args:
-        if type(config_key) is not str:
-            raise ValueError("One of the config keys is not a string !")
-        if config_key in current_config_section:
-            __logger_config.debug("Found config key: {}".format(config_key))
-            current_config_section = current_config_section[config_key]
-        else:
-            __logger_config.debug("Returning default value early !")
-            return default_value
-    
-    return current_config_section
-
-
-def get_root_data_dir() -> str:
-    """
-    Get the absolute path for any file storage task.
-    
-    :return: Absolute path to the root folder used for any file storage task.
-    """
-    return os.path.abspath(
-        get_config_value(DEFAULT_APPLICATION_ROOT_OUTPUT_DIRECTORY, ["application", "root_output_dir"]))
-
-
-def get_youtube_basedir() -> str:
-    """
-    Get the absolute path for any YouTube-related file storage task.
-    
-    :return: Absolute path to the root directory for YouTube-related file storage task.
-    """
-    return os.path.abspath(os.path.join(
-        get_root_data_dir(),
-        get_config_value(DEFAULT_YOUTUBE_MAIN_OUTPUT_DIRECTORY, ["youtube", "output_subdir"])
-    ))
-
-
-def get_youtube_live_metadata_delay_ms() -> int:
-    """
-    Retrieves the delay in milliseconds between the start of a live downloader thread and the moment it attempts to
-    download its thumbnail and description.
-    
-    :return: The amount of time to wait in milliseconds.
-    """
-    if "youtube" in config:
-        if "delay_ms_metadata_download" in config["youtube"]:
-            return config["youtube"]["delay_ms_metadata_download"]
-    return DEFAULT_DELAY_MS_METADATA_DOWNLOAD
+    return config

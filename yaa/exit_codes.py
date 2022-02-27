@@ -29,3 +29,6 @@ ERROR_RUNNING_AS_ROOT = 1005
 
 ERROR_INVALID_CONFIG_FIELD_TYPE = 1006
 """ Returned when one of the field in the config file doesn't have the right data type. """
+
+ERROR_INVALID_ENV_VAR = 1007
+""" ??? """
