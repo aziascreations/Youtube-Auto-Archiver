@@ -1,4 +1,4 @@
-# Youtube Auto Archiver <sub><sup>v0.7.0</sup></sub>
+# Youtube Auto Archiver <sub><sup>v0.7.1</sup></sub>
 A simple and yet highly configurable Python application that automatically checks if a Youtuber is streaming,
 and downloads said streams while also archiving its latest uploads.
 
@@ -28,7 +28,7 @@ The application isn't designed to be used by another one as a module.
   * Native support for cookies for *yt-dlp* and maybe *streamlink*.
   * Better support to prevent command injection.  (Will block some features if used)
 * Planned for later
-  * Using TOML for the config file only Python 3.11 is released and stable.
+  * Using TOML for the config file when Python 3.11 is released and stable.
 
 ## Requirements
 * [Python](https://www.python.org/) >= v3.9, < v3.11 <sub><sup>(Preferably)</sup></sub>
@@ -88,18 +88,13 @@ root since the output volume binding's permissions can't be properly configured.
 docker-compose up --build
 ```
 
-## Configuration
-For information on how to configure the app, check the relevant section on the project's readme.
-
-For information regarding the configuration of this container, all you have to do is change the `/data` volume if you need it in a specific location.
-
-Please note that the [docker-compose.yml](docker/docker-compose.yml) files already has its environment variables set, as well as an independent config file setup.
-
 ## Config
 The config is stored in [config.json](config.json) and has to be in the same folder as [app.py](app.py), unless the
 appropriate [environment variables](#environment-variables) tells the application to look elsewhere for it.
 
 Please refer to [config.md](config.md) for more information on the config file and its fields.
+
+Regarding the configuration of this container, all you have to do is change the `/data` volume if you need it in a specific location.
 
 ## Build Arguments *(Docker)*
 <table>
@@ -125,6 +120,8 @@ Please refer to [config.md](config.md) for more information on the config file a
 
 ## Environment Variables
 Any environment variable that is not set will have the effect of its default value.
+
+Please note that the [docker-compose.yml](docker/docker-compose.yml) files already has its environment variables set, as well as an independent config file setup.
 
 <table>
     <tr>

@@ -9,15 +9,16 @@ ARG BGID=1000
 
 # Installing dependencies.
 # * 'g++', 'make' -> Compiling some dependencies.
+# * 'libxslt-dev', 'libxml2-dev' -> Compiling some dependencies (ARM only, apparently).
 # * 'py3-lxml' -> Pre-compiled module, allows you to ignore compilation errors.
 RUN apk update && apk upgrade && \
-    apk add --no-cache g++ make py3-lxml ffmpeg
+    apk add --no-cache g++ make py3-lxml ffmpeg libxslt-dev libxml2-dev
 
 # Previously used to compile lxml for streamlink.  (Not used for the moment)
-# RUN apk add --no-cache libxslt-dev libxml2-dev
+# RUN apk add --no-cache 
 
 # Installing required Python packages.
-ADD --chown=BUID:BGID ./requirements.txt /app/requirements.txt
+ADD --chown=$BUID:$BGID ./requirements.txt /app/requirements.txt
 RUN pip install --upgrade -r /app/requirements.txt
 
 # Removing packages that are no longer needed and were used for compiling streamlink and its dependencies.
@@ -26,7 +27,7 @@ RUN pip install --upgrade -r /app/requirements.txt
 RUN apk del g++ make
 
 # Copying the app's files to the container
-ADD --chown=BUID:BGID . /app
+ADD --chown=$BUID:$BGID . /app
 
 # Running the application.
 # * Thanks to jdpus for the "-u" flag, it fixes the output (https://stackoverflow.com/a/29745541/4135541)
