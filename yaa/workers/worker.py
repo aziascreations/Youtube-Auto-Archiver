@@ -81,7 +81,7 @@ class Worker:
                 self.logger_worker.warning("A thread is already running on this worker !")
                 return False
             else:
-                self.logger_worker.debug("A thread has finished running, cleanup needed !")
+                self.logger_worker.debug("A thread has finished running, quickly cleaning up some stuff !")
                 self.thread._target = None
                 self.thread = None
         

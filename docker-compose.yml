@@ -7,12 +7,16 @@ services:
       context: .
       dockerfile: Dockerfile
       args:
+        # User and group IDs under which the app runs and who owns the app's directory.
+        # * May be left as 0 if running on Windows or NTFS volumes, see the main readme for more info !
         - BUID=0
         - BGID=0
     environment:
+      # May be set to '0' or '1' to allow or prevent the application to run as 'root'.
       YAA_ALLOW_ROOT: 1
+      # Path to the config file, used by the app to bypass the default './config.json' location.
       YAA_CONFIG_PATH: "/data/config.json"
     volumes:
-      - ./data:/data
-      - ./config-docker.json:/data/config.json:ro
+      - ./data:/app/data
+      - ./config.json:/data/config.json:ro
     restart: unless-stopped

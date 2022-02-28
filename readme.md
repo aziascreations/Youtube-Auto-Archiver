@@ -15,7 +15,6 @@ it is installed via the "*[py3-lxml](https://pkgs.alpinelinux.org/packages?name=
 
 The application isn't designed to be used by another one as a module.
 
-
 ## Features
 * General
   * Can run on Windows and Linux (*Tested on x64 and ARMv8*)
@@ -30,7 +29,7 @@ The application isn't designed to be used by another one as a module.
 
 ## Requirements
 * [Python](https://www.python.org/) v3.9
-* [Streamlink](https://streamlink.github.io/) v2.3.0
+* [Streamlink](https://streamlink.github.io/) v3.1.1
 * [yt-dlp](https://github.com/yt-dlp/yt-dlp) v2021.09.02
 
 The application may work just fine with older or newer versions of these pieces of software, but they will not be supported.<br>
@@ -45,12 +44,23 @@ git clone https://github.com/aziascreations/Youtube-Auto-Archiver.git
 cd Youtube-Auto-Archiver
 ```
 
-2. Install the required Python modules with one of the following commands
+2. If desired, setup a Python virtual environment
+```bash
+pip install --upgrade virtualenv
+python -m venv ./venv
+```
+* Linux:
+```bash
+source venv/bin/activate
+```
+* Windows:
+```bash
+venv\Scripts\activate
+```
+
+3. Install the required Python modules
 ```bash
 pip install -r requirements.txt
-pip install --upgrade streamlink yt-dlp
-python -m pip install -r requirements.txt
-python -m pip install --upgrade streamlink yt-dlp
 ```
 <sup>Please note that *streamlink* may need to be compiled when installed via *pip*.<br>
 You can ignore it as long as the executable is accessible in the *PATH* environment variable.</sup>
@@ -67,19 +77,20 @@ cd Youtube-Auto-Archiver
 
 2. Configure the [docker-compose.yml](docker-compose.yml) file.
 
+<sup>If you are running Docker on Windows, or on a NTFS mount under Linux, you may need to run the application as
+root since the output volume binding's permissions can't be properly configured.</sup>
+
 3. Build the container via *docker-compose*
 ```bash
 docker-compose up --build
 ```
 
 ## Configuration
-
 For information on how to configure the app, check the relevant section on the project's readme.
 
 For information regarding the configuration of this container, all you have to do is change the `/data` volume if you need it in a specific location.
 
 Please note that the [docker-compose.yml](docker/docker-compose.yml) files already has its environment variables set, as well as an independent config file setup.
-
 
 ## Config
 The config is stored in [config.json](config.json) and has to be in the same folder as [app.py](app.py), unless the

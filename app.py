@@ -104,6 +104,8 @@ try:
     os.makedirs(config.get_youtube_basedir(), exist_ok=True)
     for channel in channels:
         os.makedirs(channel.get_output_path(), exist_ok=True)
+        os.makedirs(channel.get_livestream_output_path(), exist_ok=True)
+        os.makedirs(channel.get_uploads_output_path(), exist_ok=True)
 except OSError as err:
     logger.error("Failed to create some of the required folders !")
     logger.error(err)
@@ -155,7 +157,6 @@ if end_signal_to_use == -1:
     end_signal_to_use = signal.SIGTERM
 
 # > Main loop
-# TODO: Add a gc.collect() call
 logger.info("Entering main loop...")
 logger.info("\033[36m-\033[94m===========================\033[36m-\033[39m")
 while True:
@@ -230,7 +231,6 @@ while True:
         
         # Exiting the main loop
         break
-
 
 # > Printing the logs footer
 logger.info("Goodbye !")

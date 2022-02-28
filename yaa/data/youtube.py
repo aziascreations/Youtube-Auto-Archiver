@@ -13,9 +13,12 @@ from yaa.workers.worker import Worker
 class YouTubeChannel:
     """
     This class represents a YouTube channel on a higher level than the config file's 'ConfigYoutubeChannel' object.
-
+    
     It is used by workers to access the config and any channel-related info.
     """
+    
+    config: ConfigRoot
+    """Application's config"""
     
     channel_config: ConfigYoutubeChannel
     """Channel config this object is attached to"""
@@ -68,7 +71,7 @@ class YouTubeChannel:
             name="yt-" + self.channel_config.internal_id,
             level=self.config.application.logging_level_main
         )
-    
+
     def get_output_path(self) -> str:
         """
         Get the output path for the current channel for any file storage task.
@@ -77,20 +80,35 @@ class YouTubeChannel:
         """
         return os.path.join(self.config.get_youtube_basedir(), self.channel_config.output_subdir)
     
-    # FIXME: Move this method elsewhere
+    def get_livestream_output_path(self) -> str:
+        """
+        Get the output path for the current channel for livestream storage task.
+        
+        :return: Output path for the current channel for livestream file storage task.
+        """
+        return os.path.join(self.get_output_path(), self.channel_config.live_subdir)
+    
+    def get_uploads_output_path(self) -> str:
+        """
+        Get the output path for the current channel for uploads storage task.
+        
+        :return: Output path for the current channel for uploads file storage task.
+        """
+        return os.path.join(self.get_output_path(), self.channel_config.upload_subdir)
+    
     def should_run_worker_live(self) -> bool:
         """
         Returns a boolean indicating whether the live thread should run.
-
+        
         :return: True if the live thread should run, False otherwise.
         """
         if (not self.channel_config.check_live) or self.channel_config.interval_ms_live == -1:
-            self.logger.debug("No worker run: disabled")
+            self.logger.debug("Live worker not ran: Disabled")
             return False
         
         if self.worker_live is not None:
             if self.worker_live.is_running():
-                self.logger.debug("No worker run: ongoing")
+                self.logger.debug("Live worker not ran: Ongoing")
                 self.check_live_ongoing = True
                 return False
         
@@ -98,34 +116,33 @@ class YouTubeChannel:
             # The thread is no longer running but was during the last check.
             self.check_live_ongoing = False
             self.check_live_last_timestamp = time.time()
-            self.logger.debug("No worker run: was ongoing")
+            self.logger.debug("Live worker not ran: Was ongoing")
             return False
         
         if time.time() > self.check_live_last_timestamp + (self.channel_config.interval_ms_live / 1000):
             self.check_live_last_timestamp = time.time()
-            self.logger.debug("Worker run")
+            self.logger.debug("Live worker ran")
             return True
         
-        self.logger.debug("No worker run: not enough time passed ({:.1f}s vs {:.1f}s)".format(
+        self.logger.debug("Live worker not ran: Not enough time passed ({:.1f}s vs {:.1f}s)".format(
             time.time() - self.check_live_last_timestamp,
             self.channel_config.interval_ms_live / 1000
         ))
         return False
-
-    # FIXME: Move this method elsewhere
+    
     def should_run_worker_upload(self) -> bool:
         """
         Returns a boolean indicating whether the upload thread should run.
-
+        
         :return: True if the upload thread should run, False otherwise.
         """
         if (not self.channel_config.check_upload) or self.channel_config.interval_ms_upload == -1:
-            self.logger.debug("Worker not ran: disabled")
+            self.logger.debug("Uploads worker not ran: Disabled")
             return False
         
         if self.worker_upload is not None:
             if self.worker_upload.is_running():
-                self.logger.debug("Worker not ran: ongoing")
+                self.logger.debug("Uploads worker not ran: Ongoing")
                 self.check_upload_ongoing = True
                 return False
         
@@ -133,15 +150,15 @@ class YouTubeChannel:
             # The thread is no longer running but was during the last check.
             self.check_upload_ongoing = False
             self.check_upload_last_timestamp = time.time()
-            self.logger.debug("Worker not ran: was ongoing")
+            self.logger.debug("Uploads worker not ran: Was ongoing")
             return False
         
         if time.time() > self.check_upload_last_timestamp + (self.channel_config.interval_ms_upload / 1000):
             self.check_upload_last_timestamp = time.time()
-            self.logger.debug("Worker run")
+            self.logger.debug("Uploads worker ran")
             return True
         
-        self.logger.debug("Worker not ran: not enough time passed ({:.1f}s vs {:.1f}s)".format(
+        self.logger.debug("Uploads worker not ran: Not enough time passed ({:.1f}s vs {:.1f}s)".format(
             time.time() - self.check_upload_last_timestamp,
             self.channel_config.interval_ms_upload / 1000
         ))

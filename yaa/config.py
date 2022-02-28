@@ -13,6 +13,7 @@ __logger_config = logger.get_logger("config")
 
 # Constants
 CONFIG_PATH_DEFAULT = os.getenv("YAA_CONFIG_PATH", "./config.json")
+# TODO: Add an env var for this constant for 0.8.0
 DEFAULT_LOGGER_LEVEL_APPLICATION = logging.DEBUG
 DEFAULT_LOGGER_LEVEL_WORKER = logging.DEBUG
 DEFAULT_LOGGER_LEVEL_THREAD = logging.DEBUG
@@ -26,7 +27,7 @@ class ConfigApplication:
     root_output_dir: str = "./data"
     """Root directory where the downloaded data should be stored in."""
     
-    logging_level_main: int = 20
+    logging_level_main: int = 10
     """
     Logging level for the main app.
     See Python's documentation for more information
@@ -68,13 +69,27 @@ class ConfigYoutubeChannel:
     channel_id: str
     """Id of the relevant YouTube channel."""
     
+    # FIXME: Find a way to make it equal to 'internal_id'
     name: str
     """Friendly name used in logging only."""
     
+    # FIXME: Find a way to make it equal to './{internal_id}'
     output_subdir: str
     """
     Directory in which all the files for this channel are downloaded into.
     Appended to application.root_output_dir and youtube.output_subdir.
+    """
+    
+    live_subdir: str = "./livestreams"
+    """
+    Directory in which all the livestream files for this channel are downloaded into.
+    Appended to application.root_output_dir, youtube.output_subdir and youtube.{channel}.output_subdir.
+    """
+    
+    upload_subdir: str = "./uploads"
+    """
+    Directory in which all the upload files for this channel are downloaded into.
+    Appended to application.root_output_dir, youtube.output_subdir and youtube.{channel}.output_subdir.
     """
     
     check_live: bool = False
@@ -128,12 +143,6 @@ class ConfigYoutube:
     """
     Directory in which all YouTube related downloads are stored.
     Appended to application.root_output_dir.
-    """
-
-    general_prefix: str = "yt-"
-    """
-    Prefix added to every downloaded file related to YouTube.
-    (WILL BE REMOVED IN THE NEXT MAJOR VERSION)
     """
     
     delay_ms_metadata_download: int = 30000

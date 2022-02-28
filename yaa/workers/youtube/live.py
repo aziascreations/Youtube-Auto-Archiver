@@ -40,6 +40,9 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
     :param args: Raw arguments passed by workers. (Not used)
     :return: Nothing. (See the description for more info)
     """
+    # Makes non-debug logs possible to debug from a bird's eye view.
+    worker.logger_thread.info("Running 'YouTube Live' thread for '{}' !".format(worker.channel.channel_config.name))
+    
     # Preparing the logger for the 1st time if needed.
     if worker.logger_thread is None:
         worker.logger_thread = get_logger(
@@ -48,15 +51,14 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
         )
     
     # Preparing the base filename with no extension
-    file_base_name: str = "{}{}-live-{}".format(
-        worker.channel.config.youtube.general_prefix,
+    file_base_name: str = "{}-live-{}".format(
         worker.channel.channel_config.internal_id,
         str(int(time.time()))
     )
     
     # Preparing the command
     command: str = "streamlink --hls-live-restart -o \"{}\" https://www.youtube.com/c/{}/live {}".format(
-        os.path.normpath(os.path.join(worker.channel.get_output_path(), file_base_name + ".mp4")),
+        os.path.normpath(os.path.join(worker.channel.get_livestream_output_path(), file_base_name + ".mp4")),
         worker.channel.channel_config.channel_id,
         worker.channel.channel_config.quality_live
     )
@@ -77,10 +79,11 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
                 # Attempting to download the metadata
                 worker.logger_thread.debug("Attempting to download metadata...")
                 
+                # TODO: Fix for the new folder structure !
                 command_yt_dlp = "yt-dlp --write-thumbnail --write-description --write-info-json --skip-download " \
                                  "-o \"{}\" https://www.youtube.com/c/{}/live"
                 command_yt_dlp = command_yt_dlp.format(
-                    os.path.normpath(os.path.join(worker.channel.get_output_path(), file_base_name)),
+                    os.path.normpath(os.path.join(worker.channel.get_livestream_output_path(), file_base_name)),
                     worker.channel.channel_config.channel_id
                 )
                 worker.logger_thread.debug("Command: " + command_yt_dlp)

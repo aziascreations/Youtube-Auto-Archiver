@@ -124,15 +124,6 @@ If said variable does not have a default value, the program will exit and print 
         <td><code>./youtube</code></td>
     </tr>
     <tr>
-        <td>general_prefix</td>
-        <td>String</td>
-        <td>
-            Prefix added to every downloaded file related to YouTube.<br>
-            (WILL BE REMOVED IN THE NEXT VERSION)
-        </td>
-        <td><i>Required</i></td>
-    </tr>
-    <tr>
         <td>delay_ms_metadata_download</td>
         <td>Integer</td>
         <td>Delay in ms between the start of a live downloader thread and the moment it attempts to download its thumbnail
@@ -196,7 +187,7 @@ and description.<br>Can be disabled if set to <code>-1</code>.</td>
         <td>name</td>
         <td>String</td>
         <td>Friendly name used in logging only.</td>
-        <td><code>{internal_id}</code></td>
+        <td><code>{internal_id}</code><br><b>Broken in 0.7.0, now required</b></td>
     </tr>
     <tr>
         <td>output_subdir</td>
@@ -205,7 +196,25 @@ and description.<br>Can be disabled if set to <code>-1</code>.</td>
             Directory in which all the files for this channel are downloaded into.<br>
             Appended to <code>application.root_output_dir</code> and <code>youtube.output_subdir</code>.
         </td>
-        <td><code>./{internal_id}</code></td>
+        <td><code>./{internal_id}</code><br><b>Broken in 0.7.0, now required</b></td>
+    </tr>
+    <tr>
+        <td>live_subdir</td>
+        <td>String</td>
+        <td>
+            Directory in which all the livestream files for this channel are downloaded into.
+            <code>Appended to application.root_output_dir</code>, <code>youtube.output_subdir</code> and <code>youtube.{channel}.output_subdir</code>.
+        </td>
+        <td><code>./livestreams</code></b></td>
+    </tr>
+    <tr>
+        <td>upload_subdir</td>
+        <td>String</td>
+        <td>
+            Directory in which all the upload files for this channel are downloaded into.
+            <code>Appended to application.root_output_dir</code>, <code>youtube.output_subdir</code> and <code>youtube.{channel}.output_subdir</code>.
+        </td>
+        <td><code>./uploads</code></b></td>
     </tr>
     <tr>
         <td>check_live</td>

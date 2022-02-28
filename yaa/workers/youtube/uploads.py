@@ -39,6 +39,9 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
     :param args: Raw arguments passed by workers. (Not used)
     :return: Nothing. (See the description for more info)
     """
+    # Makes non-debug logs possible to debug from a bird's eye view.
+    worker.logger_thread.info("Running 'YouTube Uploads' thread for '{}' !".format(worker.channel.channel_config.name))
+    
     # Preparing the logger for the 1st time if needed.
     if worker.logger_thread is None:
         worker.logger_thread = get_logger(
@@ -50,13 +53,17 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
     command: str = "yt-dlp --no-warnings --newline --no-progress --dateafter now-{}days {}{}-f {} {}" \
                    "https://www.youtube.com/c/{}"
     command = command.format(
+        # Backlog day count
         ("1" if worker.channel.channel_config.backlog_days_upload < 1
          else str(worker.channel.channel_config.backlog_days_upload)),
+        # Standard flags (1 per line)
         ("" if not worker.channel.channel_config.break_on_existing else "--break-on-existing "),
         ("" if not worker.channel.channel_config.break_on_reject else "--break-on-reject "),
         worker.channel.channel_config.quality_upload,
+        # Extra raw arguments
         worker.channel.channel_config.yt_dlp_extra_args +
         ("" if worker.channel.channel_config.yt_dlp_extra_args.endswith(" ") else " "),
+        # Channel ID
         worker.channel.channel_config.channel_id
     )
     worker.logger_thread.debug("Command: " + command)
@@ -66,7 +73,7 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
         command,
         shell=True,
         stdout=subprocess.PIPE,
-        cwd=os.path.normpath(worker.channel.get_output_path())
+        cwd=os.path.normpath(worker.channel.get_uploads_output_path())
     )
     
     # Waiting for it to finish...
