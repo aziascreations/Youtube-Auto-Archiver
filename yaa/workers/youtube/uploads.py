@@ -39,15 +39,15 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
     :param args: Raw arguments passed by workers. (Not used)
     :return: Nothing. (See the description for more info)
     """
-    # Makes non-debug logs possible to debug from a bird's eye view.
-    worker.logger_thread.info("Running 'YouTube Uploads' thread for '{}' !".format(worker.channel.channel_config.name))
-    
     # Preparing the logger for the 1st time if needed.
     if worker.logger_thread is None:
         worker.logger_thread = get_logger(
             "yt-upload-" + worker.channel.channel_config.internal_id,
             worker.channel.config.youtube.logging_level_thread
         )
+    
+    # Makes non-debug logs possible to debug from a bird's eye view.
+    worker.logger_thread.info("Running 'YouTube Uploads' thread for '{}' !".format(worker.channel.channel_config.name))
     
     # Preparing the command
     command: str = "yt-dlp --no-warnings --newline --no-progress --dateafter now-{}days {}{}-f {} {}" \
@@ -91,6 +91,7 @@ def __thread_yt_upload(worker: YouTubeWorker, **args):
     
     worker.last_return_code = process.returncode
     
+    # TODO: Figure out a safe way to re-encode these lines for 0.8.0 !
     lines = process.stdout.readlines()
     process.stdout.flush()
     for line in lines:

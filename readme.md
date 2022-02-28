@@ -26,11 +26,14 @@ The application isn't designed to be used by another one as a module.
   * Configurable delays, actions, locations per channel.
 * Planned for v1.0.0
   * Native support for cookies for *yt-dlp* and maybe *streamlink*.
+  * Better support to prevent command injection.  (Will block some features if used)
+* Planned for later
+  * Using TOML for the config file only Python 3.11 is released and stable.
 
 ## Requirements
-* [Python](https://www.python.org/) v3.9
-* [Streamlink](https://streamlink.github.io/) v3.1.1
-* [yt-dlp](https://github.com/yt-dlp/yt-dlp) v2021.09.02
+* [Python](https://www.python.org/) >= v3.9, < v3.11 <sub><sup>(Preferably)</sup></sub>
+* [Streamlink](https://streamlink.github.io/) >= v3.1.1, < v4.\*.\*
+* [yt-dlp](https://github.com/yt-dlp/yt-dlp) >= v2022.02.04
 
 The application may work just fine with older or newer versions of these pieces of software, but they will not be supported.<br>
 All requirements, except for *Python*, can be installed via *pip* or manually.
@@ -97,6 +100,28 @@ The config is stored in [config.json](config.json) and has to be in the same fol
 appropriate [environment variables](#environment-variables) tells the application to look elsewhere for it.
 
 Please refer to [config.md](config.md) for more information on the config file and its fields.
+
+## Build Arguments *(Docker)*
+<table>
+    <tr>
+        <th style="width:25%">Variable</th>
+        <th style="width:20%">Type</th>
+        <th style="width:50%">Remark</th>
+        <th style="width:5%">Default</th>
+    </tr>
+    <tr>
+        <td>BUID</td>
+        <td>Integer</td>
+        <td>User ID under which the app runs and who owns the app's directory.<br>May not work on Windows and NTFS volumes !</td>
+        <td><code>1000</code></td>
+    </tr>
+    <tr>
+        <td>BGID</td>
+        <td>Integer</td>
+        <td>Group ID under which the app runs and who owns the app's directory.<br>May not work on Windows and NTFS volumes !</td>
+        <td><code>1000</code></td>
+    </tr>
+</table>
 
 ## Environment Variables
 Any environment variable that is not set will have the effect of its default value.

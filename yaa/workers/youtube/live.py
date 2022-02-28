@@ -40,8 +40,6 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
     :param args: Raw arguments passed by workers. (Not used)
     :return: Nothing. (See the description for more info)
     """
-    # Makes non-debug logs possible to debug from a bird's eye view.
-    worker.logger_thread.info("Running 'YouTube Live' thread for '{}' !".format(worker.channel.channel_config.name))
     
     # Preparing the logger for the 1st time if needed.
     if worker.logger_thread is None:
@@ -49,6 +47,9 @@ def __thread_yt_live(worker: YouTubeWorker, **args):
             "yt-live-" + worker.channel.channel_config.internal_id,
             worker.channel.config.youtube.logging_level_thread
         )
+    
+    # Makes non-debug logs possible to debug from a bird's eye view.
+    worker.logger_thread.info("Running 'YouTube Live' thread for '{}' !".format(worker.channel.channel_config.name))
     
     # Preparing the base filename with no extension
     file_base_name: str = "{}-live-{}".format(
