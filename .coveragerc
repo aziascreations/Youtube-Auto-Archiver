@@ -1,0 +1,9 @@
+[report]
+show_missing = True
+omit =
+    data/*
+    tests/*
+    yaa/__init__.py
+    yaa/*/__init__.py
+    yaa/logger.py
+    yaa/exit_codes.py

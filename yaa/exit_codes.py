@@ -1,34 +1,33 @@
 # Standard exit codes
 NONE = 0
-""" Standard exit code returned when everything went well. """
+"""Standard exit code returned when everything went well."""
 
 NO_ERROR = NONE
-""" Standard exit code returned when everything went well."""
+"""Standard exit code returned when everything went well."""
+
 
 # Custom exit codes
-ERROR_CWD_FAILURE = 1000
-""" Returned when the application failed to changed its current working directory. """
+ERROR_CONFIG_INVALID_PATH = 2000
+"""Returned when the config file couldn't be found or is a folder."""
 
-ERROR_MKDIR_FAILURE = 1001
-""" Returned when the application failed to create the folder structure for its downloads. """
+ERROR_CONFIG_PARSING_FAILURE = 2001
+"""Returned when the config file couldn't be parsed."""
 
-ERROR_CONFIG_OS_ERROR = 1002
-"""
-Returned when the application encountered a generic OSError.
-Only happens when loading the config file.
-"""
+__ERROR_OUTDATED_CONFIG = 2002
+""" Returned when the config file is using an outdated and unsupported format."""
 
-ERROR_CONFIG_JSON_ERROR = 1003
-""" Returned when the application encountered an error when parsing the config file's content. """
 
-ERROR_OUTDATED_CONFIG = 1004
-""" Returned when the config file is using the old 0.4.0 format. """
+ERROR_RUNNING_AS_ROOT = 2010
+"""Returned when the application is running as 'root' when it shouldn't."""
 
-ERROR_RUNNING_AS_ROOT = 1005
-""" Returned when the application is running as 'root' when it shouldn't. """
+ERROR_NO_OS_GETUID = 2011
+"""Returned couldn't find the 'os.getuid' method when it was required."""
 
-ERROR_INVALID_CONFIG_FIELD_TYPE = 1006
-""" Returned when one of the field in the config file doesn't have the right data type. """
 
-ERROR_INVALID_ENV_VAR = 1007
-""" ??? """
+ERROR_CWD_FAILURE = 2020
+"""Returned when the application failed to changed its current working directory."""
+
+
+# Legacy custom exit codes  (DO NOT USE !!!)
+__ERROR_MKDIR_FAILURE = 1001
+"""Returned when the application failed to create the folder structure for its downloads."""

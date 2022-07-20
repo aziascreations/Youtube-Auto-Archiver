@@ -1,227 +1,264 @@
 # Imports
-import json
+from dataclasses import dataclass, asdict, field
 import logging
+import json
 import os
-import sys
+import pathlib
+from typing import Optional
 
-from . import logger, exit_codes
+import toml
+import yaml
 
-from dataclasses import dataclass, field
-
-# Globals
-__logger_config = logger.get_logger("config")
 
 # Constants
-CONFIG_PATH_DEFAULT = os.getenv("YAA_CONFIG_PATH", "./config.json")
-# TODO: Add an env var for this constant for 0.8.0
-DEFAULT_LOGGER_LEVEL_APPLICATION = logging.DEBUG
-DEFAULT_LOGGER_LEVEL_WORKER = logging.DEBUG
-DEFAULT_LOGGER_LEVEL_THREAD = logging.DEBUG
+CURRENT_VERSION_NUMBER = 1
 
 
 # Classes
 @dataclass
-class ConfigApplication:
-    """Config fields related to the application itself."""
+class ConfigLoggerShared:
+    """Any log-related configs."""
     
-    root_output_dir: str = "./data"
-    """Root directory where the downloaded data should be stored in."""
+    log_format: str = "[%(asctime)s] [%(name)s/%(levelname).3s]: %(message)s"
+    """Logging format used for every logger."""
     
-    logging_level_main: int = 10
-    """
-    Logging level for the main app.
-    See Python's documentation for more information
-    """
+    log_date_format: str = "%H:%M:%S"
+    """Time format used for every logger."""
     
-    auto_shutdown_after_ms: int = -1
-    """
-    Delay in milliseconds after which the application should automatically exit with a return code of 0.
-    This can be used to restart containers and clean potential memory leaks.
-    """
+    level_main_script: int = logging.INFO
+    """Used by the main script that sets up everything else."""
     
-    auto_shutdown_do_wait_for_workers: bool = True
-    """
-    Indicates whether or not the application should wait for all worker's thread to finish without sending a SIGINT or SIGTERM signal back to them after the countdown was reached.
-    If set to False, the application will forcefully kill these threads which could lead to a loss or corruption of data.
-    No new threads will be launched while the main loop waits for all threads to be finished with there work.
-    """
+    level_web_setup: int = logging.INFO
+    """Used during the setup and exiting steps of Flask."""
     
-    auto_shutdown_number_to_send: int = -1
-    """
-    Indicates which signal should be send to threads if auto_shutdown_do_wait_for_workers is set to False.
-    Allowed values are -1, SIGINT (2) and SIGTERM (15).
-    If it is set to an incorrect value, or to -1, it will automatically be set to SIGTERM (15) and will be said in the debug-level logs.
-    """
+    print_header: bool = True
+    """???"""
     
-    signal_shutdown_do_wait_for_workers: bool = False
-    """
-    Indicates whether or not the application should wait for all worker's thread to finish without sending a SIGINT or SIGTERM signal back to them after receiving a shutdown signal.
-    If set to False, the application will forcefully kill these threads which could lead to a loss or corruption of data.
-    No new threads will be launched while the main loop waits for all threads to be finished with there work.
-    """
+    print_footer: bool = True
+    """???"""
+
+
+@dataclass
+class ConfigWebInterface:
+    """Web interface's configs."""
+    
+    enable: bool = False
+    """Whether or not the web interface should be enabled, loaded and started."""
+    
+    host: str = "127.0.0.1"
+    """Which host the web server should bind itself to."""
+    
+    port: int = 8080
+    """Which port the web server should use."""
+
+
+@dataclass
+class ConfigYoutubeChannelUploads:
+    """???"""
+    
+    enable: bool = False
+    """Toggles the video downloading worker and threads."""
+
+
+@dataclass
+class ConfigYoutubeChannelLivestreams:
+    """???"""
+    
+    enable: bool = False
+    """Toggles the livestream downloading worker and threads."""
 
 
 @dataclass
 class ConfigYoutubeChannel:
+    """Config fields related to a single channel."""
+    
     internal_id: str
     """Arbitrary string used in downloaded files and loggers' names."""
     
     channel_id: str
     """Id of the relevant YouTube channel."""
     
-    # FIXME: Find a way to make it equal to 'internal_id'
-    name: str
-    """Friendly name used in logging only."""
+    friendly_name: Optional[str] = None
+    """Friendly name used in logging to identify the channel more easily."""
     
-    # FIXME: Find a way to make it equal to './{internal_id}'
-    output_subdir: str
-    """
-    Directory in which all the files for this channel are downloaded into.
-    Appended to application.root_output_dir and youtube.output_subdir.
-    """
+    uploads: Optional[ConfigYoutubeChannelUploads] = ConfigYoutubeChannelUploads()
+    """???"""
     
-    live_subdir: str = "./livestreams"
-    """
-    Directory in which all the livestream files for this channel are downloaded into.
-    Appended to application.root_output_dir, youtube.output_subdir and youtube.{channel}.output_subdir.
-    """
+    livestreams: Optional[ConfigYoutubeChannelLivestreams] = ConfigYoutubeChannelLivestreams()
+    """???"""
     
-    upload_subdir: str = "./uploads"
-    """
-    Directory in which all the upload files for this channel are downloaded into.
-    Appended to application.root_output_dir, youtube.output_subdir and youtube.{channel}.output_subdir.
-    """
-    
-    check_live: bool = False
-    """Toggles the live downloading worker and threads."""
-    
-    check_upload: bool = False
-    """Toggles the video downloading worker and threads."""
-    
-    interval_ms_live: int = -1
-    """
-    Delay in ms between each verification of the channel to see if it is livestreaming.
-    Will disable the functionality if set to -1.
-    """
-    
-    interval_ms_upload: int = -1
-    """
-    Delay in ms between each verification of the channel to see if it is livestreaming.
-    Will disable the functionality if set to -1.
-    """
-    
-    quality_live: str = "best"
-    """Quality setting used in streamlink when downloading a live."""
-    
-    quality_upload: str = "best"
-    """Quality setting used in yt-dlp with the -f option."""
-    
-    backlog_days_upload: int = 7
-    """
-    Number of days to look back to for uploads
-    Added as-is in the --dateafter now-Xdays option where X is the number of days given here.
-    """
-    
-    break_on_existing: bool = True
-    """Indicates if yt-dlp should stop downloading uploads when encountering an existing completed download."""
-    
-    break_on_reject: bool = True
-    """Indicates if yt-dlp should stop downloading uploads when encountering a filtered video."""
-    
-    yt_dlp_extra_args: str = ""
-    """Extra args added as-is to the yt-dlp command right before the channel URL."""
-    
-    allow_upload_while_live: bool = True
-    """Indicates whether yt-dlp can download videos while a live worker is running for the given channel."""
+    # Fixing the optional fields
+    def __post_init__(self):
+        if self.friendly_name is None:
+            self.friendly_name = self.internal_id
+            
+        if self.uploads is None:
+            self.uploads = ConfigYoutubeChannelUploads()
+            
+        if self.livestreams is None:
+            self.livestreams = ConfigYoutubeChannelLivestreams()
+            
+        if type(self.uploads) is dict:
+            self.uploads: dict
+            self.uploads = ConfigYoutubeChannelUploads(**self.uploads)
+            
+        if type(self.livestreams) is dict:
+            self.livestreams: dict
+            self.livestreams = ConfigYoutubeChannelLivestreams(**self.livestreams)
 
 
 @dataclass
 class ConfigYoutube:
     """Config fields related to all YouTube-centric tasks."""
     
-    output_subdir: str = "./youtube"
+    common_output_subdir: str = "youtube"
     """
-    Directory in which all YouTube related downloads are stored.
-    Appended to application.root_output_dir.
-    """
-    
-    delay_ms_metadata_download: int = 30000
-    """
-    Delay in ms between the start of a live downloader thread and the moment it attempts to download its thumbnail and description.
-    Can be disabled if set to -1.
+    Sub-directory in which all YouTube related downloads are stored.
+    Appended to 'base_output_dir'.
     """
     
-    logging_level_worker: int = 10
-    """
-    Logging level for all YouTube-related workers.
-    See Python's documentation for more information
-    """
+    uploads_output_directory: str = "uploads"
+    """???"""
     
-    logging_level_thread: int = 10
-    """
-    Logging level for all YouTube-related threads.
-    See Python's documentation for more information
-    """
+    livestreams_output_directory: str = "livestreams"
+    """???"""
     
-    channels: list[ConfigYoutubeChannel] = field(default_factory=lambda: [])
-    """List of channels' info for the workers"""
+    channels: Optional[list[ConfigYoutubeChannel]] = field(default_factory=lambda: [])
+    """???"""
+    
+    # Fixing the optional fields & dataclasses
+    def __post_init__(self):
+        if self.channels is None:
+            self.channels = list()
+        
+        # FIXME: Parse the channels !
 
 
 @dataclass
 class ConfigRoot:
     """Main class that contains all the application's config"""
     
-    application: ConfigApplication = ConfigApplication()
-    """Contains the configs that are use globally by the application."""
+    version: int = CURRENT_VERSION_NUMBER
+    """
+    Number representing the current version of the config file.
+    Will be incremented everytime breaking changes occur.
+    """
+    
+    base_output_dir: str = "./data"
+    """Directory where all other sub-dirs will be contained."""
+    
+    allow_running_as_root: bool = False
+    """Whether the application should be able to run as root."""
+    
+    skip_if_no_get_uid: bool = True
+    """
+    Skips the root user process check if 'os.getuid' is not available.
+    A warning will be shown if True, an error will be show instead if False.
+    """
+    
+    web: ConfigWebInterface = ConfigWebInterface()
+    """Web interface's configs."""
+    
+    logs: ConfigLoggerShared = ConfigLoggerShared()
+    """Any log-related configs."""
     
     youtube: ConfigYoutube = ConfigYoutube()
-    """Contains the configs for the YouTube related part of the application."""
+    """Config fields related to all YouTube-centric tasks."""
     
-    def get_root_data_dir(self) -> str:
-        """
-        Get the absolute path for any file storage task.
-        
-        :return: Absolute path to the root folder used for any file storage task.
-        """
-        return os.path.abspath(self.application.root_output_dir)
-    
-    def get_youtube_basedir(self) -> str:
-        """
-        Get the absolute path for any YouTube-related file storage task.
-        
-        :return: Absolute path to the root directory for YouTube-related file storage task.
-        """
-        return os.path.abspath(os.path.join(self.get_root_data_dir(), self.youtube.output_subdir))
+    # Fixing the optional fields & dataclasses
+    def __post_init__(self):
+        if type(self.web) is dict:
+            self.web: dict
+            self.web = ConfigWebInterface(**self.web)
+            
+        if type(self.logs) is dict:
+            self.logs: dict
+            self.logs = ConfigLoggerShared(**self.logs)
+            
+        if type(self.youtube) is dict:
+            self.youtube: dict
+            self.youtube = ConfigYoutube(**self.youtube)
 
 
 # Methods
-def load_config(config_path: str = CONFIG_PATH_DEFAULT) -> ConfigRoot:
+def load_config_from_dict(raw_data: dict) -> ConfigRoot:
+    return ConfigRoot(**raw_data)
+
+
+def load_config_from_file(file_path: str) -> ConfigRoot:
+    if not os.path.exists(file_path):
+        raise IOError("The path '{}' given as '{}' doesn't exist !".format(os.path.abspath(file_path), file_path))
+    
+    if not os.path.isfile(file_path):
+        raise IOError("The path '{}' given as '{}' isn't a file !".format(os.path.abspath(file_path), file_path))
+    
+    with open(file_path, "rb") as f:
+        config_raw_data = f.read().decode("utf-8")
+    
+    try:
+        match pathlib.Path(file_path).suffix:
+            case ".json":
+                return load_config_from_dict(json.loads(config_raw_data))
+            case ".toml":
+                return load_config_from_dict(toml.loads(config_raw_data))
+            case ".yaml" | ".yml":
+                return load_config_from_dict(yaml.safe_load(config_raw_data))
+    except Exception as err:
+        raise ValueError(err)
+    
+    raise IOError("The file '{}' isn't using a supported extension, got '{}' !".format(
+        file_path, pathlib.Path('yourPath.example').suffix
+    ))
+
+
+def export_config_to_json(config: ConfigRoot) -> str:
+    return json.dumps(asdict(config), indent=4)
+
+
+def export_config_to_toml(config: ConfigRoot) -> str:
+    return toml.dumps(asdict(config))
+
+
+def export_config_to_yaml(config: ConfigRoot) -> str:
+    return yaml.dump(asdict(config))
+
+
+# Tests
+if __name__ == "__main__":
     """
-    Reads the given config file and returns a proper config object.
+    _config = ConfigRoot()
+    _config.youtube.channels.append(
+        ConfigYoutubeChannel(internal_id="test", channel_id="123456")
+    )
+    _config.youtube.channels.append(
+        ConfigYoutubeChannel(internal_id="joe_mama", channel_id="abc789")
+    )
     
-    :param config_path: Path to the config file.
-    :return: The parsed config file.
-    :raises IOError: If the config file couldn't be found.
-    :raises IOError: If the config file couldn't be found.
+    print("#"*25)
+    print(export_config_to_json(_config))
+    print("#"*25)
+    print(export_config_to_toml(_config))
+    print("#"*25)
+    print(export_config_to_yaml(_config))
+    print("#"*25)
     """
+
+    print("#"*25)
+    config_json = load_config_from_file("../data/test.json")
+    print(type(config_json))
+    print(type(config_json.youtube))
+    print(config_json.youtube)
     
-    if not os.path.exists(config_path):
-        raise IOError("The config file '{}' could not be found !".format(config_path))
+    print("#"*25)
+    config_toml = load_config_from_file("../data/test.toml")
+    print(type(config_toml))
+    print(type(config_toml.youtube))
+    print(config_toml)
     
-    with open(config_path, "r") as f:
-        _raw_config = json.load(f)
+    print("#"*25)
+    config_yaml = load_config_from_file("../data/test.yaml")
+    print(type(config_yaml))
+    print(type(config_yaml.youtube))
+    print(config_yaml.youtube)
     
-    # Quickly checking if the config file is outdated. (v0.4.0 or older)
-    if "application" in _raw_config:
-        if "base_output_dir" in _raw_config["application"]:
-            __logger_config.error("Please update you config file !")
-            __logger_config.error("It is still using the format for the 0.4.0 version of the application !")
-            __logger_config.error("Once you remove the 'application.base_output_dir' field, this error will go away !")
-            sys.exit(exit_codes.ERROR_OUTDATED_CONFIG)
-    
-    config = ConfigRoot(**_raw_config)
-    config.application = ConfigApplication(**config.application)
-    config.youtube = ConfigYoutube(**config.youtube)
-    config.youtube.channels = [ConfigYoutubeChannel(**x) for x in config.youtube.channels]
-    
-    return config
+    print("#"*25)

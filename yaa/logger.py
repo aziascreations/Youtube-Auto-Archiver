@@ -4,25 +4,25 @@ import sys
 
 
 # Methods
-def get_logger(name: str, level: int = logging.INFO) -> logging.Logger:
+def get_logger(name: str, level: int, log_format: str, log_date_format: str) -> logging.Logger:
     """
     Creates a logger with the given attributes and a standard formatter format.
     
     :param name: Name of the logger.
     :param level: Logging level used by the logger.
+    :param log_format: ???
+    :param log_date_format: ???
     :return: The newly or previously created Logger object.
     """
     logger = logging.getLogger(name)
     logger.setLevel(level)
     
-    # Simple check that prevents a logger from having more than one formatter when using the method.
     if len(logger.handlers) == 0:
+        # Making sure we don't duplicate the formatter.
         ch = logging.StreamHandler()
         ch.setLevel(level)
-        # formatter = logging.Formatter("%(asctime)s - %(levelname).3s - %(name)s > %(message)s")
-        # formatter.datefmt = "%Y/%m/%d %I:%M:%S"
-        formatter = logging.Formatter("[%(asctime)s] [%(name)s/%(levelname).3s]: %(message)s")
-        formatter.datefmt = "%H:%M:%S"
+        formatter = logging.Formatter(log_format)
+        formatter.datefmt = log_date_format
         ch.setFormatter(formatter)
         ch.setStream(sys.stdout)
         logger.addHandler(ch)

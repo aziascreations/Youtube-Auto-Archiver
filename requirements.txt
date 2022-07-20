@@ -1,2 +1,13 @@
-streamlink>=3.1.1,<4.0.0
-yt-dlp>=2022.02.04
+# YouTube video downloading
+streamlink>=4.2.0,<5.0.0
+
+# YouTube stream downloading
+yt-dlp>=2022.7.18
+
+# Config files
+toml>=0.10.2,<0.11.0  # Will be replaced with 'tomllib' once Python 3.11 is more widely supported.
+pyyaml>=6.0,<7.0
+
+# Web interface
+flask>=2.1.3,<3.0.0
+Flask-Login>=0.6.1,<0.7.0
