@@ -1,4 +1,4 @@
-# Youtube Auto Archiver <sub><sup>v0.7.1</sup></sub>
+# Youtube Auto Archiver <sub><sup>v0.7.2</sup></sub>
 A simple and yet highly configurable Python application that automatically checks if a Youtuber is streaming,
 and downloads said streams while also archiving its latest uploads.
 
@@ -31,7 +31,7 @@ The application isn't designed to be used by another one as a module.
   * Using TOML for the config file when Python 3.11 is released and stable.
 
 ## Requirements
-* [Python](https://www.python.org/) >= v3.9, < v3.11 <sub><sup>(Preferably)</sup></sub>
+* [Python](https://www.python.org/) >= v3.9
 * [Streamlink](https://streamlink.github.io/) >= v3.1.1, < v4.\*.\*
 * [yt-dlp](https://github.com/yt-dlp/yt-dlp) >= v2022.02.04
 

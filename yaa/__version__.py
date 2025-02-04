@@ -4,7 +4,7 @@ VERSION_MAJOR = 0
 VERSION_MINOR = 7
 """Current minor version number of the application"""
 
-VERSION_PATCH = 1
+VERSION_PATCH = 2
 """Current patch version number of the application"""
 
 VERSION = "{}.{}.{}".format(VERSION_MAJOR, VERSION_MINOR, VERSION_PATCH)
