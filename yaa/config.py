@@ -166,17 +166,33 @@ class ConfigYoutube:
     channels: list[ConfigYoutubeChannel] = field(default_factory=lambda: [])
     """List of channels' info for the workers"""
 
+    def __post_init__(self):
+        parsed_channels = list()
+
+        raw_channel_config: dict
+        for raw_channel_config in self.channels:
+            parsed_channels.append(ConfigYoutubeChannel(**raw_channel_config))
+
+        self.channels = parsed_channels
+
 
 @dataclass
 class ConfigRoot:
     """Main class that contains all the application's config"""
     
-    application: ConfigApplication = ConfigApplication()
+    application: ConfigApplication
     """Contains the configs that are use globally by the application."""
     
-    youtube: ConfigYoutube = ConfigYoutube()
+    youtube: ConfigYoutube
     """Contains the configs for the YouTube related part of the application."""
-    
+
+    def __post_init__(self):
+        self.application: dict
+        self.application = ConfigApplication(**self.application)
+
+        self.youtube: dict
+        self.youtube = ConfigYoutube(**self.youtube)
+
     def get_root_data_dir(self) -> str:
         """
         Get the absolute path for any file storage task.
@@ -220,8 +236,5 @@ def load_config(config_path: str = CONFIG_PATH_DEFAULT) -> ConfigRoot:
             sys.exit(exit_codes.ERROR_OUTDATED_CONFIG)
     
     config = ConfigRoot(**_raw_config)
-    config.application = ConfigApplication(**config.application)
-    config.youtube = ConfigYoutube(**config.youtube)
-    config.youtube.channels = [ConfigYoutubeChannel(**x) for x in config.youtube.channels]
     
     return config
